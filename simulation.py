@@ -5,7 +5,7 @@ class Board:
     def __init__(self, rows=15, cols=50):
         self.rows = rows
         self.cols = cols
-        self.board = [[entities.Entity()] * cols for row in range(rows)] 
+        self.board = [[[entities.Entity()]] * cols for row in range(rows)] 
         self.populateBoard()
 
     def __getitem__(self, row):
@@ -19,11 +19,11 @@ class Board:
             for col in range(self.cols):
                 roll = rand.randint(1, 100)
                 if roll <= herbivoreChance:
-                    self.board[row][col] = entities.Herbivore()
+                    self.board[row][col] = [entities.Herbivore()]
                 elif roll <= herbivoreChance + carnivoreChance:
-                    self.board[row][col] = entities.Carnivore()
+                    self.board[row][col] = [entities.Carnivore()]
                 elif roll <= herbivoreChance + carnivoreChance + plantChance:
-                    self.board[row][col] = entities.Plant(rand.randint(2, 4))
+                    self.board[row][col] = [entities.Plant(rand.randint(2, 4))]
 
     def tick(self):
         for row in range(self.rows):
