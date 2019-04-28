@@ -28,14 +28,14 @@ class Board:
     def tick(self):
         for row in range(self.rows):
             for col in range(self.cols):
-                if isinstance(self.board[row][col], entities.Animal):
-                    animal = self.board[row][col]
+                if isinstance(self.board[row][col][0], entities.Animal):
+                    animal = self.board[row][col][0]
                     animal.move((self, row, col))
                     animal.decrementStepsInRound()
         for row in range(self.rows):
             for col in range(self.cols):
-                if isinstance(self.board[row][col], entities.Animal):
-                    self.board[row][col].resetStepsInRound()
+                if isinstance(self.board[row][col][0], entities.Animal):
+                    self.board[row][col][0].resetStepsInRound()
 
     def printBoard(self):
         for col in range(self.cols + 2):
@@ -44,11 +44,11 @@ class Board:
             print('')
             for col in range(self.cols):
                 if col == 0:
-                    print('|{}'.format(self.board[row][col].character), end='')
+                    print('|{}'.format(self.board[row][col][0].character), end='')
                 elif col == self.cols - 1:
-                    print('{}|'.format(self.board[row][col].character), end='')
+                    print('{}|'.format(self.board[row][col][0].character), end='')
                 else:
-                    print(self.board[row][col].character, end='')
+                    print(self.board[row][col][0].character, end='')
         print('')
         for col in range(self.cols + 2):
             print('-', end='')    

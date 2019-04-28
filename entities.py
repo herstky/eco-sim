@@ -43,7 +43,7 @@ class Animal(Entity):
 
     def die(self, position):
         board, row, col = position
-        board[row][col] = Entity()
+        board[row][col] = [Entity()]
 
     # returns a tuple containing the new coords, with the row as the first element
     # and the col as the second. returned coords must be checked for validity by 
@@ -65,7 +65,7 @@ class Animal(Entity):
         row, col = self.getNewCoords(position, direction)
         if row < 0 or row > board.rows - 1 or col < 0 or col > board.cols - 1:
             return False
-        elif not board[row][col].name == 'Entity':
+        elif not board[row][col][0].name == 'Entity':
             return False
         else:
             return True
@@ -88,8 +88,8 @@ class Animal(Entity):
     def moveToPosition(self, position, direction):
         board, row, col = position
         newRow, newCol = self.getNewCoords(position, direction)
-        board[row][col] = Entity()
-        board[newRow][newCol] = self
+        board[row][col] = [Entity()]
+        board[newRow][newCol] = [self]
 
     def attemptToEat(self, position):
         possibleMoves = ['N', 'E', 'S', 'W']
@@ -113,9 +113,9 @@ class Animal(Entity):
         if row < 0 or row > board.rows - 1 or col < 0 or col > board.cols - 1:
             return False
         for entity in validEntities:
-            if isinstance(board[row][col], entity):
-                board[startingRow][startingCol] = Entity()
-                board[row][col] = self
+            if isinstance(board[row][col][0], entity):
+                board[startingRow][startingCol] = [Entity()]
+                board[row][col] = [self]
                 return True
             return False
 
@@ -139,7 +139,7 @@ class Animal(Entity):
     def breed(self, position, direction):
         board = position[0]
         newRow, newCol = self.getNewCoords(position, direction)
-        board[newRow][newCol] = self.__class__()
+        board[newRow][newCol] = [self.__class__()]
 
 
 
