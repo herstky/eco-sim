@@ -1,21 +1,70 @@
 import random as rand
 
 class Entity:
-    def __init__(self):
+    def __init__(self, board):
+        self.board = board
         self.name = 'Entity'
+        self.character = 'E'
+        self.row = None
+        self.col = None
+        
+    def removeFromBoard(self):
+        self.board.removeEntityFromBoard(self)
+
+    def delete(self):
+        self.board.deleteEntity(self)
+
+    def update(self):
+        pass
+
+class EmptySpace(Entity):
+    def __init__(self, board):
+        super().__init__(board)
+        self.name = 'EmptySpace'
         self.character = ' '
 
-class Animal(Entity):
-    def __init__(self):
+class Organism(Entity):
+    def __init__(self, board):
+        super().__init__(board)
+        self.name = 'Organism'
+        self.character = 'O'
+        self.health = self.calculateHealth()
+        self.speed = self.calculateSpeed()
+        
+    def calculateHealth(self, base=100, variance=0):
+        health = base * rand.randint(0, 1) + variance * rand.uniform(-1, 1) 
+        return max(health, 0)
+
+    def calculateSpeed(self, base=0, variance=0):
+        speed = base * rand.randint(0, 1) + variance * rand.uniform(-1, 1) 
+        return max(speed, 0)
+
+    def update(self):
+        if self.health <= 0:
+            return self.delete()
+
+    def simulate(self):
+        pass
+
+class Animal(Organism):
+    def __init__(self, board):
+        super().__init__(board)
         self.name = 'Animal'
         self.character = '@'
+        self.speed = self.calculateSpeed(5, 2)
         self.diet = []
         self.satiation = 100
+        self.satiationAmount = 10
         self.hungerAmount = 10
         self.stepsPerRound = 1
         self.remainingStepsInRound = self.stepsPerRound
         self.stepsToBreed = 8
         self.remainingStepsToBreed = self.stepsToBreed
+
+    def update(self):
+        super().update()
+        if self.satiation <= 0:
+            self.delete()
 
     def decrementStepsInRound(self):
         if self.remainingStepsInRound > 0:
@@ -31,25 +80,20 @@ class Animal(Entity):
     def resetStepsToBreed(self):
         self.remainingStepsToBreed = self.stepsToBreed
 
-    def restoreSatiation(self, amount=10):
-        self.satiation += amount
+    def restoreSatiation(self):
+        self.satiation += self.satiationAmount
         if self.satiation > 100:
             self.satiation = 100
 
-    def depleteSatiation(self, position):
+    def decrementSatiation(self):
         self.satiation -= self.hungerAmount
-        if self.satiation <= 0:
-            self.die(position)
-
-    def die(self, position):
-        board, row, col = position
-        board[row][col] = [Entity()]
 
     # returns a tuple containing the new coords, with the row as the first element
     # and the col as the second. returned coords must be checked for validity by 
     # calling function
-    def getNewCoords(self, position, direction):
-        row, col = position[1:]
+    def getCoordsAtDirection(self, direction):
+        row = self.row
+        col = self.col
         if direction == 'N':
                 row -= 1
         elif direction == 'E':
@@ -60,17 +104,25 @@ class Animal(Entity):
                 col -= 1
         return (row, col)
         
-    def isClear(self, position, direction):
-        board = position[0]
-        row, col = self.getNewCoords(position, direction)
-        if row < 0 or row > board.rows - 1 or col < 0 or col > board.cols - 1:
-            return False
-        elif not board[row][col][0].name == 'Entity':
+    # checks if the adjacent cell in the given direction is empty
+    def isClear(self, direction):
+        row, col = self.getCoordsAtDirection(direction)
+        if (row < 0 or row > self.board.rows - 1 
+            or col < 0 or col > self.board.cols - 1 
+            or not isinstance(self.board.getEntity((row, col)), EmptySpace)):
             return False
         else:
             return True
 
-    def move(self, position):
+    # moves the entity to the adjacent cell in the given direction
+    def moveInDirection(self, direction):
+        newRow, newCol = self.getCoordsAtDirection(direction)
+        self.board.moveEntity(self, (newRow, newCol))
+
+    def simulate(self):
+        self.move()
+
+    def move(self):
         if self.remainingStepsInRound <= 0: # this must always be checked first
             return 
 
@@ -79,55 +131,49 @@ class Animal(Entity):
         while len(possibleMoves) > 0 and not hasMoved:
             roll = rand.randint(0, len(possibleMoves) - 1)
             direction = possibleMoves[roll]
-            if self.isClear(position, direction):
-                self.moveToPosition(position, direction)
+            if self.isClear(direction):
+                self.moveInDirection(direction)
                 hasMoved = True
             else:
                 possibleMoves.remove(direction)
 
-    def moveToPosition(self, position, direction):
-        board, row, col = position
-        newRow, newCol = self.getNewCoords(position, direction)
-        board[row][col] = [Entity()]
-        board[newRow][newCol] = [self]
-
-    def attemptToEat(self, position):
+    def attemptToEat(self):
         possibleMoves = ['N', 'E', 'S', 'W']
         hasEaten = False
         while len(possibleMoves) > 0 and not hasEaten:
             roll = rand.randint(0, len(possibleMoves) - 1)
             direction = possibleMoves[roll]
-            if self.moveToEntity(position, direction, self.diet):
-                self.restoreSatiation(10) # TODO restore amount based on food eaten
+            if self.checkForValidEntity(direction, self.diet):
+                coords = self.getCoordsAtDirection(direction)
+                self.board.getEntity(coords).delete()
+                self.moveInDirection(coords)
+                self.restoreSatiation()
                 hasEaten = True
             else:
                 possibleMoves.remove(possibleMoves[roll])
         if not hasEaten:
-            self.depleteSatiation(position)
+            self.decrementSatiation()
         return hasEaten
 
-    # checks if specified location contains an entity in the validEntities list
-    def moveToEntity(self, position, direction, validEntities):
-        board, startingRow, startingCol = position  
-        row, col = self.getNewCoords(position, direction)
-        if row < 0 or row > board.rows - 1 or col < 0 or col > board.cols - 1:
+    # checks if adjacent cell in specificed direction contains an entity in the validEntities list
+    def checkForValidEntity(self, direction, validEntities):
+        row, col = self.getCoordsAtDirection(direction)
+        if row < 0 or row > self.board.rows - 1 or col < 0 or col > self.board.cols - 1:
             return False
         for entity in validEntities:
-            if isinstance(board[row][col][0], entity):
-                board[startingRow][startingCol] = [Entity()]
-                board[row][col] = [self]
+            if isinstance(self.board.getEntity((row, col)), entity):
                 return True
             return False
 
-    def attemptToBreed(self, position):
+    def attemptToBreed(self):
         hasBred = False
         if self.remainingStepsToBreed <= 0:     
             possibleSpaces = ['N', 'E', 'S', 'W']
             while len(possibleSpaces) > 0 and not hasBred:
                 roll = rand.randint(0, len(possibleSpaces) - 1)
                 direction = possibleSpaces[roll]
-                if self.isClear(position, direction):
-                    self.breed(position, direction)
+                if self.isClear(direction):
+                    self.breed(direction)
                     self.resetStepsToBreed()
                     hasBred = True
                 else:
@@ -136,38 +182,38 @@ class Animal(Entity):
             self.decrementStepsToBreed()
         return hasBred
     
-    def breed(self, position, direction):
-        board = position[0]
-        newRow, newCol = self.getNewCoords(position, direction)
-        board[newRow][newCol] = [self.__class__()]
+    def breed(self, direction):
+        newRow, newCol = self.getCoordsAtDirection(direction)
+        self.board.addEntity(self.__class__(self.board), (newRow, newCol))
 
 
 
 class Herbivore(Animal):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, board):
+        super().__init__(board)
         self.name ='Herbivore'
         self.character = 'H'
         self.diet.append(Plant)
         self.hungerAmount = 1
 
-    def move(self, position):
-        if not self.attemptToEat(position):
-            super().move(position)
-        self.attemptToBreed(position)
+    def move(self):
+        if not self.attemptToEat():
+            super().move()
+        self.attemptToBreed()
 
 class Carnivore(Animal):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, board):
+        super().__init__(board)
         self.name = 'Carnivore'
         self.character = 'C'
         self.diet.append(Herbivore)
         self.hungerAmount = 15
+        self.satiationAmount = 50
 
-    def move(self, position):
-        if not self.attemptToEat(position):
-            super().move(position)
-        self.attemptToBreed(position)
+    def move(self):
+        if not self.attemptToEat():
+            super().move()
+        self.attemptToBreed()
 
 class Omnivore(Animal):
     def __init__(self):
@@ -177,7 +223,8 @@ class Omnivore(Animal):
         self.diet.extend((Plant, Animal))
 
 class Plant(Entity):
-    def __init__(self, size=4):
+    def __init__(self, board, size=4):
+        super().__init__(board)
         self.name = 'Plant'
         self.characters = ['.', ':',';', '#']
         self.size = size
@@ -186,8 +233,12 @@ class Plant(Entity):
     def setCharacter(self):
         self.character = self.characters[self.size - 1]
 
+    def simulate(self):
+        return True
+
 class Scent(Entity):
-    def __init__(self, intensity=3):
+    def __init__(self, board, intensity=3):
+        super().__init__(board)
         self.name = 'Scent'
         self.intensity = intensity
         self.characters = ['~', 'S', '$']
