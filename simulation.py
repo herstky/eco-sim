@@ -3,7 +3,7 @@ import random as rand
 from time import sleep
 
 class Board:
-    def __init__(self, rows=15, cols=50):
+    def __init__(self, rows=20, cols=30):
         self.rows = rows
         self.cols = cols
         self.entities = []
