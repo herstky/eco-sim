@@ -39,6 +39,7 @@ class Board:
     def deleteEntity(self, entity):
         self.entities.remove(entity)
         self.removeEntityFromBoard(entity)
+        entity.label.hide()
 
     # returns entity at the front of the list at the given coords
     def getEntity(self, coords):
@@ -79,32 +80,9 @@ class Board:
                 # elif roll <= herbivoreChance + carnivoreChance + plantChance:
                 #     self.addEntity(entities.Plant(self, rand.randint(2, 4)), (row, col))
 
-    def tick(self):
-        self.simulateEntities()
-        self.updateEntities()
-
-    # prints the first entity in every cell
-    # it would appear the MS interpreter can't print all this. TODO delete
-    def printBoard(self):
-        for col in range(self.cols + 2):
-            print('-', end='')
-        for row in range(self.rows):
-            print('')
-            for col in range(self.cols):
-                if col == 0:
-                    print('|{}'.format(self.getEntity((row, col)).character), end='')
-                elif col == self.cols - 1:
-                    print('{}|'.format(self.getEntity((row, col)).character), end='')
-                else:
-                    print(self.getEntity((row, col)).character, end='')
-        print('')
-        for col in range(self.cols + 2):
-            print('-', end='')    
-        print('')
-
 class Simulation:
     def __init__(self, window, iterations=10, waitBetweenEntities=0.25, waitBetweenRounds=0):
-        self.board = Board(window)
+        self.board = Board(window, 10, 10)
         self.window = window
         self.iterations = iterations
         self.waitBetweenEntities = waitBetweenEntities

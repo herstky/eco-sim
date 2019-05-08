@@ -4,7 +4,6 @@ class Entity:
     def __init__(self, board):
         self.board = board
         self.name = 'Entity'
-        self.character = 'E'
         self.texture = None
         self.label = None
         self.row = None
@@ -23,13 +22,11 @@ class EmptySpace(Entity):
     def __init__(self, board):
         super().__init__(board)
         self.name = 'EmptySpace'
-        self.character = ' '
 
 class Organism(Entity):
     def __init__(self, board):
         super().__init__(board)
         self.name = 'Organism'
-        self.character = 'O'
         self.health = self.calculateHealth()
         self.speed = self.calculateSpeed()
         
@@ -49,7 +46,6 @@ class Animal(Organism):
     def __init__(self, board):
         super().__init__(board)
         self.name = 'Animal'
-        self.character = '@'
         self.speed = self.calculateSpeed(5, 2)
         self.diet = []
         self.satiation = 100
@@ -190,7 +186,6 @@ class Herbivore(Animal):
     def __init__(self, board):
         super().__init__(board)
         self.name ='Herbivore'
-        self.character = 'H'
         self.texture = 'assets/blueCircle.png'
         self.diet.append(Plant)
         self.hungerAmount = 1
@@ -204,7 +199,6 @@ class Carnivore(Animal):
     def __init__(self, board):
         super().__init__(board)
         self.name = 'Carnivore'
-        self.character = 'C'
         self.texture = 'assets/orangeCircle.png'
         self.diet.append(Herbivore)
         self.hungerAmount = 15
@@ -219,7 +213,6 @@ class Omnivore(Animal):
     def __init__(self):
         super().__init__()
         self.name = 'Omnivore'
-        self.character = 'O'
         self.diet.extend((Plant, Animal))
 
 class Plant(Entity):
@@ -241,8 +234,4 @@ class Scent(Entity):
         super().__init__(board)
         self.name = 'Scent'
         self.intensity = intensity
-        self.characters = ['~', 'S', '$']
         self.setCharacter()
-
-    def setCharacter(self):
-        self.character = self.characters[self.intensity - 1]

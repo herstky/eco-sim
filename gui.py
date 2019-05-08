@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
-from PyQt5.QtCore import QTimer, QElapsedTimer, Qt
-from time import sleep
+from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import Qt
+
 import sys
 
 class Window(QMainWindow):
@@ -22,12 +23,6 @@ class Window(QMainWindow):
         self.qTimer.setInterval(self.simulation.waitBetweenRounds * 1000)
         self.qTimer.timeout.connect(function)
         self.qTimer.start()
-
-    def move(self):
-        time = self.qSimTime.elapsed() / 1000
-        self.row += self.v_x * time + 1 / 2 * self.a_x * pow(time, 2)
-        self.col += self.v_y * time + 1 / 2 * self.a_y * pow(time, 2)
-        self.label.move(self.row, self.col)
 
     def createBackground(self, rows, cols):
         pixmap = QPixmap('assets/grass.png')
