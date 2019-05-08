@@ -51,8 +51,6 @@ class Animal(Organism):
         self.satiation = 100
         self.satiationAmount = 10
         self.hungerAmount = 10
-        self.stepsPerRound = 1
-        self.remainingStepsInRound = self.stepsPerRound
         self.stepsToBreed = 8
         self.remainingStepsToBreed = self.stepsToBreed
 
@@ -61,16 +59,9 @@ class Animal(Organism):
         if self.satiation <= 0:
             self.delete()
 
-    def decrementStepsInRound(self):
-        if self.remainingStepsInRound > 0:
-            self.remainingStepsInRound -= 1
-
     def decrementStepsToBreed(self):
         if self.remainingStepsToBreed > 0:
             self.remainingStepsToBreed -= 1
-
-    def resetStepsInRound(self):
-        self.remainingStepsInRound = self.stepsPerRound
 
     def resetStepsToBreed(self):
         self.remainingStepsToBreed = self.stepsToBreed
@@ -117,9 +108,6 @@ class Animal(Organism):
         self.move()
 
     def move(self):
-        if self.remainingStepsInRound <= 0: # this must always be checked first
-            return 
-
         possibleMoves = ['N', 'E', 'S', 'W']
         hasMoved = False
         while len(possibleMoves) > 0 and not hasMoved:
@@ -141,12 +129,9 @@ class Animal(Organism):
                 coords = self.getCoordsAtDirection(direction)
                 self.board.getEntity(coords).delete()
                 self.moveInDirection(coords)
-                self.restoreSatiation()
                 hasEaten = True
             else:
                 possibleMoves.remove(possibleMoves[roll])
-        if not hasEaten:
-            self.decrementSatiation()
         return hasEaten
 
     # checks if adjacent cell in specificed direction contains an entity in the validEntities list
@@ -201,11 +186,14 @@ class Carnivore(Animal):
         self.name = 'Carnivore'
         self.texture = 'assets/orangeCircle.png'
         self.diet.append(Herbivore)
-        self.hungerAmount = 15
+        self.hungerAmount = 10
         self.satiationAmount = 50
 
     def move(self):
-        if not self.attemptToEat():
+        if self.attemptToEat():
+            self.restoreSatiation()
+        else:
+            self.decrementSatiation()
             super().move()
         self.attemptToBreed()
 

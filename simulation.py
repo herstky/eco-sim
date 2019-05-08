@@ -101,6 +101,7 @@ class Simulation:
         for entity in self.board.entities:
             entity.simulate()
             self.window.moveEntity(entity)
+            entity.getStatus()
         self.board.sortEntities()
             
 
