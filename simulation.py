@@ -68,7 +68,7 @@ class Board:
 
     def populateBoard(self):
         herbivoreChance = 10
-        carnivoreChance = 10
+        carnivoreChance = 3
         plantChance = 10
         for row in range(self.rows):
             for col in range(self.cols):
@@ -108,6 +108,6 @@ class Simulation:
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Window()
-    simulation = Simulation(window, 30, .5, .5)    
+    simulation = Simulation(window, 30, .5, .25)    
     window.show()
     sys.exit(app.exec_())

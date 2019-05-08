@@ -31,11 +31,11 @@ class Organism(Entity):
         self.speed = self.calculateSpeed()
         
     def calculateHealth(self, base=100, variance=0):
-        health = base * rand.randint(0, 1) + variance * rand.uniform(-1, 1) 
+        health = base + variance * rand.uniform(-1, 1) 
         return max(health, 0)
 
     def calculateSpeed(self, base=0, variance=0):
-        speed = base * rand.randint(0, 1) + variance * rand.uniform(-1, 1) 
+        speed = base + variance * rand.uniform(-1, 1) 
         return max(speed, 0)
 
     def getStatus(self):
@@ -51,7 +51,7 @@ class Animal(Organism):
         self.satiation = 100
         self.satiationAmount = 10
         self.hungerAmount = 10
-        self.stepsToBreed = 8
+        self.stepsToBreed = 6
         self.remainingStepsToBreed = self.stepsToBreed
 
     def getStatus(self):
@@ -186,8 +186,9 @@ class Carnivore(Animal):
         self.name = 'Carnivore'
         self.texture = 'assets/orangeCircle.png'
         self.diet.append(Herbivore)
-        self.hungerAmount = 10
+        self.hungerAmount = 15
         self.satiationAmount = 50
+        self.stepsToBreed = 10
 
     def move(self):
         if self.attemptToEat():
