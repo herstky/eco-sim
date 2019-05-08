@@ -5,6 +5,8 @@ class Entity:
         self.board = board
         self.name = 'Entity'
         self.character = 'E'
+        self.texture = None
+        self.label = None
         self.row = None
         self.col = None
         
@@ -14,7 +16,10 @@ class Entity:
     def delete(self):
         self.board.deleteEntity(self)
 
-    def update(self):
+    def getStatus(self):
+        pass
+
+    def simulate(self):
         pass
 
 class EmptySpace(Entity):
@@ -39,12 +44,9 @@ class Organism(Entity):
         speed = base * rand.randint(0, 1) + variance * rand.uniform(-1, 1) 
         return max(speed, 0)
 
-    def update(self):
+    def getStatus(self):
         if self.health <= 0:
             return self.delete()
-
-    def simulate(self):
-        pass
 
 class Animal(Organism):
     def __init__(self, board):
@@ -61,8 +63,8 @@ class Animal(Organism):
         self.stepsToBreed = 8
         self.remainingStepsToBreed = self.stepsToBreed
 
-    def update(self):
-        super().update()
+    def getStatus(self):
+        super().getStatus()
         if self.satiation <= 0:
             self.delete()
 
@@ -193,6 +195,7 @@ class Herbivore(Animal):
         super().__init__(board)
         self.name ='Herbivore'
         self.character = 'H'
+        self.texture = 'assets/blueCircle.png'
         self.diet.append(Plant)
         self.hungerAmount = 1
 
@@ -206,6 +209,7 @@ class Carnivore(Animal):
         super().__init__(board)
         self.name = 'Carnivore'
         self.character = 'C'
+        self.texture = 'assets/orangeCircle.png'
         self.diet.append(Herbivore)
         self.hungerAmount = 15
         self.satiationAmount = 50

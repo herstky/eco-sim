@@ -2,8 +2,11 @@ import entities
 import random as rand
 from time import sleep
 
+from gui import *
+
 class Board:
-    def __init__(self, rows=20, cols=30):
+    def __init__(self, window, rows=20, cols=30):
+        self.window = window
         self.rows = rows
         self.cols = cols
         self.entities = []
@@ -16,9 +19,11 @@ class Board:
     # adds entity to entities list and inserts it at the front of the list at the given coords
     def addEntity(self, entity, coords):
         entity.row, entity.col = coords
-        self.entities.append(entity)
+        if entity not in self.entities:
+            self.entities.append(entity)
+        if not entity.label:
+            self.window.addEntity(entity)
         self.board[entity.row][entity.col].insert(0, entity)
-        pass # TODO delete
  
     # removes entity from board, but leaves it in the entities list
     def removeEntityFromBoard(self, entity):
@@ -54,13 +59,11 @@ class Board:
         for entity in self.entities:
             entity.simulate()
 
-    def updateEntities(self):
-        # for entity in self.entities:
-            # entity.update()
+    def sortEntities(self):
         self.entities.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
 
     def populateBoard(self):
-        herbivoreChance = 30
+        herbivoreChance = 5
         carnivoreChance = 5
         plantChance = 10
         for row in range(self.rows):
@@ -68,8 +71,8 @@ class Board:
                 roll = rand.randint(1, 100)
                 if roll <= herbivoreChance:
                     self.addEntity(entities.Herbivore(self), (row, col))
-                # elif roll <= herbivoreChance + carnivoreChance:
-                #     self.addEntity(entities.Carnivore(self), (row, col))
+                elif roll <= herbivoreChance + carnivoreChance:
+                    self.addEntity(entities.Carnivore(self), (row, col))
                 # elif roll <= herbivoreChance + carnivoreChance + plantChance:
                 #     self.addEntity(entities.Plant(self, rand.randint(2, 4)), (row, col))
 
@@ -97,18 +100,32 @@ class Board:
         print('')
 
 class Simulation:
-    def __init__(self, board, iterations=10, wait=0.25):
-        self.board = board
+    def __init__(self, window, iterations=10, waitBetweenEntities=0.25, waitBetweenRounds=0):
+        self.board = Board(window)
+        self.window = window
         self.iterations = iterations
-        self.wait = wait
+        self.waitBetweenEntities = waitBetweenEntities
+        self.waitBetweenRounds = waitBetweenRounds
 
-    def run(self):
-        for _ in range(self.iterations):
-            board.printBoard()
-            board.tick()
-            sleep(self.wait)
+        self.window.simulation = self
+        self.window.createBackground(self.board.rows, self.board.cols)
+        self.addEntities()
+        self.window.startTimer(self.tick)
+
+    def addEntities(self):
+        for entity in self.board.entities:
+            self.window.addEntity(entity)
+
+    def tick(self):
+        for entity in self.board.entities:
+            entity.simulate()
+            self.window.moveEntity(entity)
+        self.board.sortEntities()
+            
 
 if __name__ == '__main__':
-    board = Board()
-    sim = Simulation(board)
-    sim.run()
+    app = QApplication(sys.argv)
+    window = Window()
+    simulation = Simulation(window, 30, .5, .5)    
+    window.show()
+    sys.exit(app.exec_())
