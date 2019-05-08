@@ -67,8 +67,8 @@ class Board:
         self.entities.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
 
     def populateBoard(self):
-        herbivoreChance = 5
-        carnivoreChance = 5
+        herbivoreChance = 10
+        carnivoreChance = 10
         plantChance = 10
         for row in range(self.rows):
             for col in range(self.cols):
@@ -82,7 +82,7 @@ class Board:
 
 class Simulation:
     def __init__(self, window, iterations=10, waitBetweenEntities=0.25, waitBetweenRounds=0):
-        self.board = Board(window, 10, 10)
+        self.board = Board(window)
         self.window = window
         self.iterations = iterations
         self.waitBetweenEntities = waitBetweenEntities
