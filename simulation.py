@@ -55,9 +55,12 @@ class Board:
         entity.col = col
         self.addEntity(entity, coords)
 
-    def simulateEntities(self):
-        for entity in self.entities:
-            entity.simulate()
+    def validPosition(self, coords):
+        row, col = coords
+        if row < 0 or row > self.rows - 1 or col < 0 or col > self.cols - 1:
+            return False
+        else:
+            return True
 
     def sortEntities(self):
         self.entities.sort(key=lambda x: x.speed, reverse=True) # faster entities go first

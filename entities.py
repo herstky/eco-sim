@@ -19,9 +19,6 @@ class Entity:
     def getStatus(self):
         pass
 
-    def simulate(self):
-        pass
-
 class EmptySpace(Entity):
     def __init__(self, board):
         super().__init__(board)
@@ -109,9 +106,8 @@ class Animal(Organism):
     # checks if the adjacent cell in the given direction is empty
     def isClear(self, direction):
         row, col = self.getCoordsAtDirection(direction)
-        if (row < 0 or row > self.board.rows - 1 
-            or col < 0 or col > self.board.cols - 1 
-            or not isinstance(self.board.getEntity((row, col)), EmptySpace)):
+        if (not self.board.validPosition((row, col)) or 
+            not isinstance(self.board.getEntity((row, col)), EmptySpace)):
             return False
         else:
             return True
@@ -160,7 +156,7 @@ class Animal(Organism):
     # checks if adjacent cell in specificed direction contains an entity in the validEntities list
     def checkForValidEntity(self, direction, validEntities):
         row, col = self.getCoordsAtDirection(direction)
-        if row < 0 or row > self.board.rows - 1 or col < 0 or col > self.board.cols - 1:
+        if not self.board.validPosition((row, col)):
             return False
         for entity in validEntities:
             if isinstance(self.board.getEntity((row, col)), entity):
