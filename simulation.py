@@ -10,7 +10,7 @@ class Board:
         self.rows = rows
         self.cols = cols
         self.entities = []
-        self.board = [[[entities.EmptySpace(self)] for col in range(self.cols)] for row in range(self.rows)]
+        self.board = [[[None] for col in range(self.cols)] for row in range(self.rows)]
         self.populateBoard()
 
     def __getitem__(self, row):
@@ -23,7 +23,11 @@ class Board:
             self.entities.append(entity)
         if not entity.label:
             self.window.addEntity(entity)
-        self.board[entity.row][entity.col].insert(0, entity)
+        i = 0
+        while (i < len(self.board[entity.row][entity.col]) and 
+              entity.cellPriority > self.board[entity.row][entity.col][i].cellPriority):
+            i += 1 
+        self.board[entity.row][entity.col].insert(i, entity)
  
     # removes entity from board, but leaves it in the entities list
     def removeEntityFromBoard(self, entity):
@@ -32,8 +36,6 @@ class Board:
         entity.row = None
         entity.col = None
         self.board[row][col].remove(entity)
-        if len(self.board[row][col]) == 0:
-            self.board[row][col].insert(entities.EmptySpace(self))
 
     # completely destroys entity
     def deleteEntity(self, entity):
@@ -45,6 +47,29 @@ class Board:
     def getEntity(self, coords):
         row, col = coords
         return self.board[row][col][0]
+
+    def getEntityOfClass(self, coords, classObject):
+        row, col = coords
+        for entity in self.board[row][col]:
+            if isinstance(entity, classObject):
+                return entity
+        return None
+
+    def getEntityofClasses(self, coords, classList):
+        row, col = coords
+        for entity in self.board[row][col]:
+            for classObject in classList:
+                if isinstance(entity, classObject):
+                    return entity
+        return None     
+
+    # checks if cell contains an instance of the given class
+    def cellContains(self, coords, classObject):
+        row, col = coords
+        for entity in self.board[row][col]:
+            if isinstance(entity, classObject):
+                return True
+        return False
 
     # insert entity at the front of the list at the given coords
     # also removes entity from previous location
@@ -63,13 +88,19 @@ class Board:
         else:
             return True
 
+    def raiseLabels(self):
+        for entity in entities:
+            cell = self.board[entity.row][entity.col]
+            for i in range(len(cell), 0):
+                cell[i].label.raise_()
+
     def sortEntities(self):
         self.entities.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
 
     def populateBoard(self):
-        herbivoreChance = 10
-        carnivoreChance = 3
-        plantChance = 10
+        herbivoreChance = 1
+        carnivoreChance = 0
+        plantChance = 8
         for row in range(self.rows):
             for col in range(self.cols):
                 roll = rand.randint(1, 100)
@@ -77,12 +108,12 @@ class Board:
                     self.addEntity(entities.Herbivore(self), (row, col))
                 elif roll <= herbivoreChance + carnivoreChance:
                     self.addEntity(entities.Carnivore(self), (row, col))
-                # elif roll <= herbivoreChance + carnivoreChance + plantChance:
-                #     self.addEntity(entities.Plant(self, rand.randint(2, 4)), (row, col))
+                elif roll <= herbivoreChance + carnivoreChance + plantChance:
+                    self.addEntity(entities.Plant(self, rand.randint(2, 4)), (row, col))
 
 class Simulation:
     def __init__(self, window, iterations=10, waitBetweenEntities=0.25, waitBetweenRounds=0):
-        self.board = Board(window)
+        self.board = Board(window, 10, 10)
         self.window = window
         self.iterations = iterations
         self.waitBetweenEntities = waitBetweenEntities

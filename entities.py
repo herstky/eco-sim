@@ -8,6 +8,7 @@ class Entity:
         self.label = None
         self.row = None
         self.col = None
+        self.cellPriority = 10
         
     def removeFromBoard(self):
         self.board.removeEntityFromBoard(self)
@@ -27,9 +28,10 @@ class Organism(Entity):
     def __init__(self, board):
         super().__init__(board)
         self.name = 'Organism'
+        self.cellPriority = 5
         self.health = self.calculateHealth()
         self.speed = self.calculateSpeed()
-        
+
     def calculateHealth(self, base=100, variance=0):
         health = base + variance * rand.uniform(-1, 1) 
         return max(health, 0)
@@ -46,13 +48,15 @@ class Animal(Organism):
     def __init__(self, board):
         super().__init__(board)
         self.name = 'Animal'
+        self.cellPriority = 1
         self.speed = self.calculateSpeed(5, 2)
         self.diet = []
         self.satiation = 100
         self.satiationAmount = 10
         self.hungerAmount = 10
         self.stepsToBreed = 6
-        self.remainingStepsToBreed = self.stepsToBreed
+        self.remainingStepsToBreed = 0
+        self.resetStepsToBreed()
 
     def getStatus(self):
         super().getStatus()
@@ -93,8 +97,7 @@ class Animal(Organism):
     # checks if the adjacent cell in the given direction is empty
     def isClear(self, direction):
         row, col = self.getCoordsAtDirection(direction)
-        if (not self.board.validPosition((row, col)) or 
-            not isinstance(self.board.getEntity((row, col)), EmptySpace)):
+        if not self.board.validPosition((row, col)) or self.board.cellContains((row, col), Animal):
             return False
         else:
             return True
@@ -127,20 +130,23 @@ class Animal(Organism):
             direction = possibleMoves[roll]
             if self.checkForValidEntity(direction, self.diet):
                 coords = self.getCoordsAtDirection(direction)
-                self.board.getEntity(coords).delete()
+                self.board.getEntityOfClasses(coords, self.diet).delete()
                 self.moveInDirection(coords)
+                self.restoreSatiation()
                 hasEaten = True
             else:
                 possibleMoves.remove(possibleMoves[roll])
+        if not hasEaten:
+            self.decrementSatiation()
         return hasEaten
 
     # checks if adjacent cell in specificed direction contains an entity in the validEntities list
-    def checkForValidEntity(self, direction, validEntities):
+    def checkForValidEntity(self, direction, validClasses):
         row, col = self.getCoordsAtDirection(direction)
         if not self.board.validPosition((row, col)):
             return False
-        for entity in validEntities:
-            if isinstance(self.board.getEntity((row, col)), entity):
+        for classObject in validClasses:
+            if self.board.contains((row, col), classObject):
                 return True
             return False
 
@@ -173,7 +179,7 @@ class Herbivore(Animal):
         self.name ='Herbivore'
         self.texture = 'assets/blueCircle.png'
         self.diet.append(Plant)
-        self.hungerAmount = 1
+        self.hungerAmount = 8
 
     def move(self):
         if not self.attemptToEat():
@@ -186,15 +192,12 @@ class Carnivore(Animal):
         self.name = 'Carnivore'
         self.texture = 'assets/orangeCircle.png'
         self.diet.append(Herbivore)
-        self.hungerAmount = 15
+        self.hungerAmount = 10
         self.satiationAmount = 50
-        self.stepsToBreed = 10
+        self.stepsToBreed = 5
 
     def move(self):
-        if self.attemptToEat():
-            self.restoreSatiation()
-        else:
-            self.decrementSatiation()
+        if not self.attemptToEat():
             super().move()
         self.attemptToBreed()
 
@@ -204,16 +207,13 @@ class Omnivore(Animal):
         self.name = 'Omnivore'
         self.diet.extend((Plant, Animal))
 
-class Plant(Entity):
+class Plant(Organism):
     def __init__(self, board, size=4):
         super().__init__(board)
         self.name = 'Plant'
-        self.characters = ['.', ':',';', '#']
+        self.cellPriority = 5
+        self.texture = 'assets/plant.png'
         self.size = size
-        self.setCharacter()
-
-    def setCharacter(self):
-        self.character = self.characters[self.size - 1]
 
     def simulate(self):
         return True
@@ -222,5 +222,6 @@ class Scent(Entity):
     def __init__(self, board, intensity=3):
         super().__init__(board)
         self.name = 'Scent'
+        self.cellPriority = 4
         self.intensity = intensity
         self.setCharacter()
