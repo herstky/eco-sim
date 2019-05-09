@@ -10,7 +10,7 @@ class Board:
         self.rows = rows
         self.cols = cols
         self.entities = []
-        self.board = [[[None] for col in range(self.cols)] for row in range(self.rows)]
+        self.board = [[[] for col in range(self.cols)] for row in range(self.rows)]
         self.populateBoard()
 
     def __getitem__(self, row):
@@ -24,10 +24,13 @@ class Board:
         if not entity.label:
             self.window.addEntity(entity)
         i = 0
-        while (i < len(self.board[entity.row][entity.col]) and 
-              entity.cellPriority > self.board[entity.row][entity.col][i].cellPriority):
-            i += 1 
-        self.board[entity.row][entity.col].insert(i, entity)
+        cell = self.board[entity.row][entity.col]
+        if len(cell) == 0:
+            cell.insert(0, entity)
+        else:
+            while i < len(cell) and entity.cellPriority > cell[i].cellPriority:
+                i += 1 
+            cell.insert(i, entity)
  
     # removes entity from board, but leaves it in the entities list
     def removeEntityFromBoard(self, entity):
@@ -55,7 +58,7 @@ class Board:
                 return entity
         return None
 
-    def getEntityofClasses(self, coords, classList):
+    def getEntityOfClasses(self, coords, classList):
         row, col = coords
         for entity in self.board[row][col]:
             for classObject in classList:
@@ -89,9 +92,9 @@ class Board:
             return True
 
     def raiseLabels(self):
-        for entity in entities:
+        for entity in self.entities:
             cell = self.board[entity.row][entity.col]
-            for i in range(len(cell), 0):
+            for i in reversed(range(len(cell))):
                 cell[i].label.raise_()
 
     def sortEntities(self):
@@ -100,7 +103,7 @@ class Board:
     def populateBoard(self):
         herbivoreChance = 1
         carnivoreChance = 0
-        plantChance = 8
+        plantChance = 25
         for row in range(self.rows):
             for col in range(self.cols):
                 roll = rand.randint(1, 100)
@@ -113,7 +116,7 @@ class Board:
 
 class Simulation:
     def __init__(self, window, iterations=10, waitBetweenEntities=0.25, waitBetweenRounds=0):
-        self.board = Board(window, 10, 10)
+        self.board = Board(window)
         self.window = window
         self.iterations = iterations
         self.waitBetweenEntities = waitBetweenEntities
@@ -134,6 +137,7 @@ class Simulation:
             self.window.moveEntity(entity)
             entity.getStatus()
         self.board.sortEntities()
+        self.board.raiseLabels()
             
 
 if __name__ == '__main__':

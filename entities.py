@@ -1,4 +1,5 @@
 import random as rand
+from constants import *
 
 class Entity:
     def __init__(self, board):
@@ -29,16 +30,25 @@ class Organism(Entity):
         super().__init__(board)
         self.name = 'Organism'
         self.cellPriority = 5
-        self.health = self.calculateHealth()
-        self.speed = self.calculateSpeed()
+        self.age = 0 # time steps
+        self.maturityAge = 0
+        self.health = 0
+        self.healthBaseline = 0
+        self.initializeHealth() 
+        self.speed = 0
+        self.speedBaseline = 0
+        self.initializeSpeed()
+        self.bodyMass = 0 # kg
+        self.bodyMassCapacity = 0
 
-    def calculateHealth(self, base=100, variance=0):
-        health = base + variance * rand.uniform(-1, 1) 
-        return max(health, 0)
+    def initializeHealth(self):
+        self.health = self.healthBaseline = self.generateParameter()
 
-    def calculateSpeed(self, base=0, variance=0):
-        speed = base + variance * rand.uniform(-1, 1) 
-        return max(speed, 0)
+    def initializeSpeed(self):
+        self.speed = self.speedBaseline = self.generateParameter(0)
+
+    def generateParameter(self, base=100, variance=0):
+        return max(0, base + variance * rand.uniform(-1, 1)) 
 
     def getStatus(self):
         if self.health <= 0:
@@ -50,17 +60,62 @@ class Animal(Organism):
         self.name = 'Animal'
         self.cellPriority = 1
         self.speed = self.calculateSpeed(5, 2)
+        self.bodyMass = 10 
+        self.bodyMassCapacity = 100
+        self.bodyFatMassFraction = .12
+        self.bodyMuscleMassFraction = .35
+        self.bodyFatStorageFraction = 0
+        self.bodyMuscleStorageFraction = 0
+        self.initializeMassStorageFractions()
+        self.energyReserves = self.bodyMass * self.bodyFatMassFraction * 37000 # kj
+        self.totalEnergyExpenditure = 0 # keeps track of the total amount of energy spent during current tick
+        self.consumedFoodMass = 0
+        self.maxConsumedFoodMass = self.bodyMass * .1 # animal can only consume some percent of its body weight
+        self.satiationThreshold = .8
         self.diet = []
-        self.satiation = 100
         self.satiationAmount = 10
         self.hungerAmount = 10
+        self.strength = 0
+        self.strengthBaseline = 0
         self.stepsToBreed = 6
         self.remainingStepsToBreed = 0
         self.resetStepsToBreed()
+    
+    def initializeStrength(self):
+        self.strength = self.strengthBaseline = self.generateParameter()
+
+    def initializeMassStorageFractions(self):
+        self.bodyFatStorageFraction = self.bodyFatMassFraction / (self.bodyFatMassFraction + self.bodyMuscleMassFraction)
+        self.bodyMuscleStorageFraction = 1 - self.bodyFatStorageFraction
+
+    def hungry(self):
+        pass
+
+    def eat(self):
+        pass
+
+    def digest(self):
+        if self.consumedFoodMass > 0:
+            amountDigested -= min(self.consumedFoodMass, self.mass * .1)
+            self.consumedFoodMass -= amountDigested
+            energyGained = 7000 * amountDigested # assuming energy content of 7000 KJ/kg for food consumed
+            if self.bodyMass < self.bodyMassCapacity: # if fully grown, all excess energy is stored as fat
+                self.bodyMass += (energyGained - self.totalEnergyExpenditure) 
+                                 / (self.bodyFatStorageFraction * BODY_FAT_ENERGY_CONTENT + self.bodyMuscleStorageFraction * BODY_MUSCLE_ENERGY_CONTENT)
+            else:
+                massGained = (energyGained - self.totalEnergyExpenditure) / BODY_FAT_ENERGY_CONTENT
+
+
+
+    def baselineEnergyExpenditure(self):
+        return 90 * self.bodyMass
+
+    def actionEnergyExpenditure(self, magnitude):
+        return magnitude * self.bodyMass * 50 
 
     def getStatus(self):
         super().getStatus()
-        if self.satiation <= 0:
+        if self.energyReserves <= 0:
             self.delete()
 
     def decrementStepsToBreed(self):
@@ -71,12 +126,12 @@ class Animal(Organism):
         self.remainingStepsToBreed = self.stepsToBreed
 
     def restoreSatiation(self):
-        self.satiation += self.satiationAmount
-        if self.satiation > 100:
-            self.satiation = 100
+        self.energyReserves += self.satiationAmount
+        if self.energyReserves > 100:
+            self.energyReserves = 100
 
     def decrementSatiation(self):
-        self.satiation -= self.hungerAmount
+        self.energyReserves -= self.hungerAmount
 
     # returns a tuple containing the new coords, with the row as the first element
     # and the col as the second. returned coords must be checked for validity by 
@@ -146,7 +201,7 @@ class Animal(Organism):
         if not self.board.validPosition((row, col)):
             return False
         for classObject in validClasses:
-            if self.board.contains((row, col), classObject):
+            if self.board.cellContains((row, col), classObject):
                 return True
             return False
 
@@ -179,7 +234,7 @@ class Herbivore(Animal):
         self.name ='Herbivore'
         self.texture = 'assets/blueCircle.png'
         self.diet.append(Plant)
-        self.hungerAmount = 8
+        self.hungerAmount = 3
 
     def move(self):
         if not self.attemptToEat():
@@ -192,9 +247,9 @@ class Carnivore(Animal):
         self.name = 'Carnivore'
         self.texture = 'assets/orangeCircle.png'
         self.diet.append(Herbivore)
-        self.hungerAmount = 10
+        self.hungerAmount = 15
         self.satiationAmount = 50
-        self.stepsToBreed = 5
+        self.stepsToBreed = 8
 
     def move(self):
         if not self.attemptToEat():
