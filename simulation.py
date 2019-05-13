@@ -69,6 +69,11 @@ class Board:
     # checks if cell contains an instance of the given class
     def cellContains(self, coords, classObject):
         row, col = coords
+        if classObject is None:
+            if len(self.board[row][col]) == 0:
+                return True
+            else:
+                return False
         for entity in self.board[row][col]:
             if isinstance(entity, classObject):
                 return True
@@ -101,18 +106,18 @@ class Board:
         self.entities.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
 
     def populateBoard(self):
-        herbivoreChance = 1
-        carnivoreChance = 0
-        plantChance = 25
+        herbivoreChance = 20
+        carnivoreChance = 4
+        plantChance = 100
         for row in range(self.rows):
             for col in range(self.cols):
                 roll = rand.randint(1, 100)
+                if roll <= plantChance:
+                    self.addEntity(entities.Plant(self, rand.randint(2, 6)), (row, col))
                 if roll <= herbivoreChance:
                     self.addEntity(entities.Herbivore(self), (row, col))
                 elif roll <= herbivoreChance + carnivoreChance:
                     self.addEntity(entities.Carnivore(self), (row, col))
-                elif roll <= herbivoreChance + carnivoreChance + plantChance:
-                    self.addEntity(entities.Plant(self, rand.randint(2, 4)), (row, col))
 
 class Simulation:
     def __init__(self, window, iterations=10, waitBetweenEntities=0.25, waitBetweenRounds=0):
@@ -143,6 +148,6 @@ class Simulation:
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Window()
-    simulation = Simulation(window, 30, .5, .25)    
+    simulation = Simulation(window, 30, .5, 1)    
     window.show()
     sys.exit(app.exec_())
