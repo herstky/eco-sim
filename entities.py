@@ -2,6 +2,9 @@ from random import randint, uniform
 from constants import *
 from body import *
 
+# TODO clean up checking for valid entities and indexes
+# TODO tune animal starvation
+
 
 class Entity:
     def __init__(self, board):
