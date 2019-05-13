@@ -7,7 +7,7 @@ class Body:
         self.edibleMassFraction = 1
 
 class AnimalBody(Body):
-    def __init__(self, mass=10, massCapacity=100):
+    def __init__(self, mass=50, massCapacity=300):
         super().__init__(mass, massCapacity)
         self.fatMassFraction = .20
         self.muscleMassFraction = .35
@@ -16,25 +16,25 @@ class AnimalBody(Body):
         self.edibleMassFraction = self.muscleMassFraction + self.fatMassFraction
         self.totalEnergyExpenditure = 0 # keeps track of the total amount of energy spent during current tick
         self.stomachContentsMass = 0
-        self.stomachCapacity = self.mass * .1 # animal can only consume some percent of its body weight
+        self.stomachCapacityRatio = .5 # animal can only consume some percent of its body weight
         self.satiationThreshold = .8
         self.starvationThreshold = .05 # fatMassFraction dropping below this threshold causes death
         self.satiationAmount = 10
         self.digestionRate = .1
 
     def hungry(self):
-        return (self.stomachContentsMass / self.stomachCapacity) < self.satiationThreshold
+        return self.stomachContentsMass / (self.mass * self.stomachCapacityRatio) < self.satiationThreshold
 
     def eat(self, organism):
         edibleMass = self.mass * self.edibleMassFraction
-        remainingStomachCapacity = self.stomachCapacity - self.stomachContentsMass
+        remainingStomachCapacity = self.mass * self.stomachCapacityRatio - self.stomachContentsMass
         self.stomachContentsMass += min(edibleMass, remainingStomachCapacity)
 
     def starved(self):
         return self.fatMassFraction < self.starvationThreshold
 
     def metabolize(self):
-        amountDigested = min(self.stomachContentsMass * self.digestionRate, self.stomachCapacity * self.digestionRate)
+        amountDigested = min(self.mass * self.digestionRate, self.stomachContentsMass)
         self.stomachContentsMass -= amountDigested
         energyGained = 7000 * amountDigested # assuming energy content of 7000 KJ/kg for food consumed
         netEnergy = energyGained - self.totalEnergyExpenditure

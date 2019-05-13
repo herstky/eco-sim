@@ -25,6 +25,9 @@ class Entity:
     def getStatus(self):
         pass
 
+    def randomizeMembers(self):
+        pass
+
     # returns a tuple containing the new coords, with the row as the first element
     # and the col as the second. returned coords must be checked for validity by 
     # calling function
@@ -48,6 +51,16 @@ class Entity:
         else:
             return True
 
+    # checks if adjacent cell in specificed direction contains an entity in the validEntities list
+    def checkForValidEntityFromList(self, direction, validClasses):
+        row, col = self.getCoordsAtDirection(direction)
+        if not self.board.validPosition((row, col)):
+            return False
+        for classObject in validClasses:
+            if self.board.cellContains((row, col), classObject):
+                return True
+            return False
+
     # checks if the adjacent cell in the given direction contains a given object
     def containsAnimal(self, direction):
         row, col = self.getCoordsAtDirection(direction)
@@ -68,18 +81,14 @@ class Entity:
         else:
             return False 
 
-class EmptySpace(Entity):
-    def __init__(self, board):
-        super().__init__(board)
-        self.name = 'EmptySpace'
-
 
 class Organism(Entity):
-    def __init__(self, board):
+    def __init__(self, board, randomize=False):
         super().__init__(board)
         self.name = 'Organism'
         self.cellPriority = 5
         self.age = 0 # time steps
+        self.generation = 0
         self.maturityAge = 0
         self.health = 0
         self.healthBaseline = 0
@@ -87,6 +96,8 @@ class Organism(Entity):
         self.speed = 0
         self.speedBaseline = 0
         self.initializeSpeed()
+        if randomize:
+            self.randomizeMembers()
 
     def initializeHealth(self):
         self.health = self.healthBaseline = self.generateParameter()
@@ -97,17 +108,20 @@ class Organism(Entity):
     def generateParameter(self, base=100, variance=0):
         return max(0, base + variance * uniform(-1, 1)) 
 
+    def randomizeMembers(self):
+        self.age = randint(0, 10)
+
     def simulate(self):
         pass
 
     def getStatus(self):
         if self.health <= 0:
             return self.die()
-
+     
 
 class Animal(Organism):
-    def __init__(self, board):
-        super().__init__(board)
+    def __init__(self, board, randomize=False):
+        super().__init__(board, randomize)
         self.name = 'Animal'
         self.cellPriority = 1
         self.diet = []
@@ -117,9 +131,16 @@ class Animal(Organism):
         self.stepsToBreed = 6
         self.remainingStepsToBreed = 0
         self.resetStepsToBreed()
+        if randomize:
+            self.randomizeMembers()
     
     def initializeStrength(self):
         self.strength = self.strengthBaseline = self.generateParameter()
+
+    def randomizeMembers(self):
+        self.body.stomachContentsMass = self.body.stomachCapacity * uniform(0, 1)
+        self.body.fatMassFraction = uniform(.15, .25)
+        self.body.muscleMassFraction = uniform(.30, .40)
 
     def getStatus(self):
         super().getStatus()
@@ -163,7 +184,7 @@ class Animal(Organism):
         while len(possibleMoves) > 0 and not hasEaten:
             roll = randint(0, len(possibleMoves) - 1)
             direction = possibleMoves[roll]
-            if self.checkForValidEntity(direction, self.diet):
+            if self.checkForValidEntityFromList(direction, self.diet):
                 coords = self.getCoordsAtDirection(direction)
                 prey = self.board.getEntityOfClasses(coords, self.diet)
                 self.body.actionEnergyExpenditure(uniform(1, 3))
@@ -175,16 +196,6 @@ class Animal(Organism):
                 possibleMoves.remove(possibleMoves[roll])
         return hasEaten
 
-    # checks if adjacent cell in specificed direction contains an entity in the validEntities list
-    def checkForValidEntity(self, direction, validClasses):
-        row, col = self.getCoordsAtDirection(direction)
-        if not self.board.validPosition((row, col)):
-            return False
-        for classObject in validClasses:
-            if self.board.cellContains((row, col), classObject):
-                return True
-            return False
-
     def attemptToBreed(self):
         hasBred = False
         if self.remainingStepsToBreed <= 0 and self.body.canReproduce() and self.age >= self.maturityAge:     
@@ -195,10 +206,10 @@ class Animal(Organism):
                 if not self.containsAnimal(direction) and self.validCell(direction):
                     self.breed(direction)
                     self.body.actionEnergyExpenditure(uniform(2, 4))
-                    self.resetStepsToBreed()
                     hasBred = True
                 else:
                     possibleSpaces.remove(direction)
+            self.resetStepsToBreed()
         if not hasBred:
             self.decrementStepsToBreed()
         return hasBred
@@ -209,12 +220,12 @@ class Animal(Organism):
 
 
 class Herbivore(Animal):
-    def __init__(self, board):
-        super().__init__(board)
+    def __init__(self, board, randomize=False):
+        super().__init__(board, randomize)
         self.name ='Herbivore'
         self.texture = 'assets/blueCircle.png'
         self.diet.append(Plant)
-        self.hungerAmount = 3
+        self.maturityAge = 15
         self.stepsToBreed = randint(3, 6)
 
     def move(self):
@@ -224,13 +235,13 @@ class Herbivore(Animal):
 
 
 class Carnivore(Animal):
-    def __init__(self, board):
-        super().__init__(board)
+    def __init__(self, board, randomize=False):
+        super().__init__(board, randomize)
         self.name = 'Carnivore'
         self.texture = 'assets/orangeCircle.png'
         self.diet.append(Herbivore)
-        self.maturityAge = 5
-        self.stepsToBreed = randint(4, 10)
+        self.maturityAge = 20
+        self.stepsToBreed = randint(8, 12)
 
     def move(self):
         hasEaten = False
@@ -249,13 +260,13 @@ class Omnivore(Animal):
 
 
 class Plant(Organism):
-    def __init__(self, board, mass=5, sproutChance=.1):
+    def __init__(self, board, mass=5, germinationChance=.1):
         super().__init__(board)
         self.name = 'Plant'
         self.cellPriority = 5
         self.texture = 'assets/plant.png'
         self.body = Body(mass, 15)
-        self.sproutChance = sproutChance
+        self.germinationChance = germinationChance
 
     def simulate(self):
         self.reproduce()
@@ -265,7 +276,7 @@ class Plant(Organism):
         directions = ['N', 'E', 'S', 'W']
         for direction in directions:
             roll = uniform(0, 1)
-            if roll <= self.sproutChance and self.isEmpty(direction) and self.validCell(direction):
+            if roll <= self.germinationChance and self.isEmpty(direction) and self.validCell(direction):
                 coords = self.getCoordsAtDirection(direction)
                 self.board.addEntity(self.__class__(self.board, 1), coords)
 

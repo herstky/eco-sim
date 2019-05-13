@@ -1,5 +1,5 @@
-import entities 
-import random as rand
+from entities import *
+from random import randint
 from time import sleep
 
 from gui import *
@@ -106,18 +106,18 @@ class Board:
         self.entities.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
 
     def populateBoard(self):
-        herbivoreChance = 20
-        carnivoreChance = 4
-        plantChance = 100
+        herbivoreChance = 12
+        carnivoreChance = 3
+        plantChance = 80
         for row in range(self.rows):
             for col in range(self.cols):
-                roll = rand.randint(1, 100)
+                roll = randint(1, 100)
                 if roll <= plantChance:
-                    self.addEntity(entities.Plant(self, rand.randint(2, 6)), (row, col))
+                    self.addEntity(Plant(self, randint(50, 100), .2), (row, col))
                 if roll <= herbivoreChance:
-                    self.addEntity(entities.Herbivore(self), (row, col))
+                    self.addEntity(Herbivore(self), (row, col))
                 elif roll <= herbivoreChance + carnivoreChance:
-                    self.addEntity(entities.Carnivore(self), (row, col))
+                    self.addEntity(Carnivore(self), (row, col))
 
 class Simulation:
     def __init__(self, window, iterations=10, waitBetweenEntities=0.25, waitBetweenRounds=0):
