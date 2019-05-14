@@ -106,9 +106,9 @@ class Board:
         self.entities.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
 
     def populateBoard(self):
-        herbivoreChance = 12
+        herbivoreChance = 8
         carnivoreChance = 3
-        plantChance = 80
+        plantChance = 70
         for row in range(self.rows):
             for col in range(self.cols):
                 roll = randint(1, 100)
@@ -148,6 +148,6 @@ class Simulation:
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Window()
-    simulation = Simulation(window, 30, .5, 1)    
+    simulation = Simulation(window, 30, .5, .5)    
     window.show()
     sys.exit(app.exec_())

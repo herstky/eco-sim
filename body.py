@@ -46,9 +46,17 @@ class AnimalBody(Body):
             self.mass += massGained
             self.fatMassFraction = (startingFatMass + massGained) / self.mass
         else: 
-            self.mass += (netEnergy / (self.fatStorageFraction * BODY_FAT_ENERGY_CONTENT +
-                         self.muscleStorageFraction * BODY_MUSCLE_ENERGY_CONTENT))
-        
+            startingMass = self.mass
+            # massGained = 
+            fatMassGained = netEnergy * self.fatStorageFraction / BODY_FAT_ENERGY_CONTENT
+            muscleMassGained = netEnergy * self.muscleStorageFraction / BODY_MUSCLE_ENERGY_CONTENT
+            startingFatMass = self.mass * self.fatMassFraction
+            startingMuscleMass = self.mass * self.muscleMassFraction
+            self.mass += fatMassGained + muscleMassGained
+            self.fatMassFraction = (startingFatMass + fatMassGained) / self.mass
+            self.muscleMassFraction = (startingMuscleMass + muscleMassGained) / self.mass
+            pass
+
     def canReproduce(self):
         return self.fatMassFraction >= .12
 

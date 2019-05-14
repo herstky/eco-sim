@@ -260,7 +260,7 @@ class Omnivore(Animal):
 
 
 class Plant(Organism):
-    def __init__(self, board, mass=5, germinationChance=.1):
+    def __init__(self, board, mass=20, germinationChance=.1):
         super().__init__(board)
         self.name = 'Plant'
         self.cellPriority = 5
