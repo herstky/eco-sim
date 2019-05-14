@@ -4,6 +4,8 @@ from body import *
 
 # TODO clean up checking for valid entities and indexes
 # TODO tune animal starvation
+# TODO animals appear to be able to occupy same space
+# TODO plants should spread seeds which are latent and grow into plants
 
 
 class Entity:
@@ -14,8 +16,17 @@ class Entity:
         self.label = None
         self.row = None
         self.col = None
-        self.cellPriority = 10
+        self.displayPriority = 10
+        self.speed = 0
+        self.speedBaseline = 0
+        self.initializeSpeed()
         
+    def generateParameter(self, base=100, variance=0):
+        return max(0, base + variance * uniform(-1, 1)) 
+
+    def initializeSpeed(self):
+        self.speed = self.speedBaseline = self.generateParameter(0)
+    
     def removeFromBoard(self):
         self.board.removeEntityFromBoard(self)
 
@@ -43,6 +54,11 @@ class Entity:
         elif direction == 'W':
                 col -= 1
         return (row, col)
+
+    # moves the entity to the adjacent cell in the given direction
+    def moveInDirection(self, direction):
+        newRow, newCol = self.getCoordsAtDirection(direction)
+        self.board.moveEntity(self, (newRow, newCol))
 
     def validCell(self, direction):
         row, col = self.getCoordsAtDirection(direction)
@@ -86,7 +102,7 @@ class Organism(Entity):
     def __init__(self, board, randomize=False):
         super().__init__(board)
         self.name = 'Organism'
-        self.cellPriority = 5
+        self.displayPriority = 5
         self.age = 0 # time steps
         self.generation = 0
         self.maturityAge = 0
@@ -101,12 +117,6 @@ class Organism(Entity):
 
     def initializeHealth(self):
         self.health = self.healthBaseline = self.generateParameter()
-
-    def initializeSpeed(self):
-        self.speed = self.speedBaseline = self.generateParameter(0)
-
-    def generateParameter(self, base=100, variance=0):
-        return max(0, base + variance * uniform(-1, 1)) 
 
     def randomizeMembers(self):
         self.age = randint(0, 10)
@@ -123,7 +133,7 @@ class Animal(Organism):
     def __init__(self, board, randomize=False):
         super().__init__(board, randomize)
         self.name = 'Animal'
-        self.cellPriority = 1
+        self.displayPriority = 1
         self.diet = []
         self.body = AnimalBody()
         self.strength = 0
@@ -153,11 +163,6 @@ class Animal(Organism):
 
     def resetStepsToBreed(self):
         self.remainingStepsToBreed = self.stepsToBreed
-
-    # moves the entity to the adjacent cell in the given direction
-    def moveInDirection(self, direction):
-        newRow, newCol = self.getCoordsAtDirection(direction)
-        self.board.moveEntity(self, (newRow, newCol))
 
     def simulate(self):
         self.body.baselineEnergyExpenditure()
@@ -225,7 +230,7 @@ class Herbivore(Animal):
         self.name ='Herbivore'
         self.texture = 'assets/blueCircle.png'
         self.diet.append(Plant)
-        self.maturityAge = 15
+        self.maturityAge = 8
         self.stepsToBreed = randint(3, 6)
 
     def move(self):
@@ -240,7 +245,7 @@ class Carnivore(Animal):
         self.name = 'Carnivore'
         self.texture = 'assets/orangeCircle.png'
         self.diet.append(Herbivore)
-        self.maturityAge = 20
+        self.maturityAge = 12
         self.stepsToBreed = randint(8, 12)
 
     def move(self):
@@ -257,34 +262,95 @@ class Omnivore(Animal):
         super().__init__()
         self.name = 'Omnivore'
         self.diet.extend((Plant, Animal))
-
+  
 
 class Plant(Organism):
-    def __init__(self, board, mass=20, germinationChance=.1):
+    def __init__(self, board, mass=1, massCapacity=35, germinationChance=10):
         super().__init__(board)
         self.name = 'Plant'
-        self.cellPriority = 5
+        self.displayPriority = 5
         self.texture = 'assets/plant.png'
-        self.body = Body(mass, 15)
+        self.body = PlantBody(mass, massCapacity)
         self.germinationChance = germinationChance
 
     def simulate(self):
-        self.reproduce()
-        pass
+        self.spreadSeeds()
+        self.body.grow()
 
-    def reproduce(self):
+    def spreadSeeds(self):
         directions = ['N', 'E', 'S', 'W']
         for direction in directions:
-            roll = uniform(0, 1)
-            if roll <= self.germinationChance and self.isEmpty(direction) and self.validCell(direction):
+            roll = randint(1, 100)
+            if roll <= self.germinationChance and self.validCell(direction):
                 coords = self.getCoordsAtDirection(direction)
-                self.board.addEntity(self.__class__(self.board, 1), coords)
+                altitude = uniform(1, 3)
+                daysToSprout = randint(6, 20)
+                self.board.addEntity(Seed(self.board, altitude, direction, daysToSprout), coords)
 
 
-class Scent(Entity):
-    def __init__(self, board, intensity=3):
+# Particles start at an altitude above ground level and float in the wind until they hit the ground
+class Particle(Entity):
+    def __init__(self, board, altitude=6, direction='N'):
         super().__init__(board)
+        self.name = 'Particle'
+        self.altitude = altitude
+        self.landed = False
+        self.direction = direction
+
+    def simulate(self):
+        self.move()
+
+    def move(self):
+        if self.landed:
+            return
+        if self.altitude > 1:
+            if self.validCell(self.direction):
+                self.moveInDirection(self.direction)
+                self.altitude += uniform(-1.5, .3)
+            else:
+                self.board.deleteEntity(self)
+        else:
+            self.altitude = 0
+            self.land()
+
+    # called when altitude reaches 0. will only be called once
+    def land(self):
+        self.landed = True
+
+
+class Seed(Particle):
+    def __init__(self, board, altitude=3, direction='N', daysToSprout=6):
+        super().__init__(board, altitude, direction)
+        self.name = 'Seed'
+        self.daysToSprout = daysToSprout
+        self.planted = False
+
+    def simulate(self):
+        super().simulate()
+        if self.planted:
+            if self.daysToSprout > 0:
+                self.daysToSprout -= 1
+            else:
+                self.sprout()
+
+    def land(self):
+        super().land()
+        coords = (self.row, self.col)
+        if self.board.cellContains(coords, Plant):
+            self.board.deleteEntity(self)
+        elif self.board.cellContains(coords, Seed):
+            for entity in self.board.getEntitiesOfClass(coords, Seed):
+                if entity.planted == True:
+                    self.board.deleteEntity(self)
+                    return
+            self.planted = True
+                
+    def sprout(self):
+        self.board.replaceEntity(self, Plant(self.board))
+    
+
+class Scent(Particle):
+    def __init__(self, board, altitude=6, direction='N', intensity=3):
+        super().__init__(board, altitude, direction)
         self.name = 'Scent'
-        self.cellPriority = 4
         self.intensity = intensity
-        self.setCharacter()

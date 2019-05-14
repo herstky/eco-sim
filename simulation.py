@@ -28,7 +28,7 @@ class Board:
         if len(cell) == 0:
             cell.insert(0, entity)
         else:
-            while i < len(cell) and entity.cellPriority > cell[i].cellPriority:
+            while i < len(cell) and entity.displayPriority > cell[i].displayPriority:
                 i += 1 
             cell.insert(i, entity)
  
@@ -44,7 +44,14 @@ class Board:
     def deleteEntity(self, entity):
         self.entities.remove(entity)
         self.removeEntityFromBoard(entity)
-        entity.label.hide()
+        if entity.label:
+            entity.label.hide()
+
+    def replaceEntity(self, target, replacement):
+        row = target.row
+        col = target.col
+        self.addEntity(replacement, (row, col))
+        self.deleteEntity(target)
 
     # returns entity at the front of the list at the given coords
     def getEntity(self, coords):
@@ -57,6 +64,16 @@ class Board:
             if isinstance(entity, classObject):
                 return entity
         return None
+
+    def getEntitiesOfClass(self, coords, classObject):
+        row, col = coords
+        entityList = []
+        for entity in self.board[row][col]:
+            if isinstance(entity, classObject):
+                entityList.append(entity)
+        return entityList
+        
+
 
     def getEntityOfClasses(self, coords, classList):
         row, col = coords
@@ -100,7 +117,8 @@ class Board:
         for entity in self.entities:
             cell = self.board[entity.row][entity.col]
             for i in reversed(range(len(cell))):
-                cell[i].label.raise_()
+                if cell[i].label:
+                    cell[i].label.raise_()
 
     def sortEntities(self):
         self.entities.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
@@ -113,7 +131,7 @@ class Board:
             for col in range(self.cols):
                 roll = randint(1, 100)
                 if roll <= plantChance:
-                    self.addEntity(Plant(self, randint(50, 100), .2), (row, col))
+                    self.addEntity(Plant(self, randint(10, 35)), (row, col))
                 if roll <= herbivoreChance:
                     self.addEntity(Herbivore(self), (row, col))
                 elif roll <= herbivoreChance + carnivoreChance:
@@ -148,6 +166,6 @@ class Simulation:
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Window()
-    simulation = Simulation(window, 30, .5, .5)    
+    simulation = Simulation(window, 30, .5, .25)    
     window.show()
     sys.exit(app.exec_())
