@@ -9,21 +9,34 @@ class Board:
         self.window = window
         self.rows = rows
         self.cols = cols
-        self.entities = []
+        self.organisms = []
+        self.particles = []
         self.board = [[[] for col in range(self.cols)] for row in range(self.rows)]
         self.populateBoard()
 
     def __getitem__(self, row):
         return self.board[row]
 
+    def getObjectList(self, entity):
+        '''
+        Returns the list corresponding to the class of entity.
+        '''
+        if isinstance(entity, Organism):
+            return self.organisms
+        elif isinstance(entity, Particle):
+            return self.particles
+        else:
+            return None
+
     def addEntity(self, entity, coords):
         '''
-        Adds entity to entities list and inserts it to the front of the list at the given coords.
+        Adds entity to list corresponding to the class of entity and inserts it into the cell
+        at coords. Cell order is based on entity.displayPriority
         '''
         entity.row, entity.col = coords
-        if entity not in self.entities:
-            self.entities.append(entity)
-        if not entity.label:
+        entities = self.getObjectList(entity)
+        if entity not in entities:
+            entities.append(entity)
             self.window.addEntity(entity)
         i = 0
         cell = self.board[entity.row][entity.col]
@@ -34,7 +47,6 @@ class Board:
                 i += 1 
             cell.insert(i, entity)
  
-    
     def removeEntityFromBoard(self, entity):
         '''
         Removes entity from board, but leaves it in the entities list.
@@ -49,7 +61,8 @@ class Board:
         '''
         Completely destroys entity.
         '''
-        self.entities.remove(entity)
+        entities = self.getObjectList(entity)
+        entities.remove(entity)
         self.removeEntityFromBoard(entity)
         if entity.label:
             entity.label.hide()
@@ -86,19 +99,19 @@ class Board:
         Iterates over list at given coords and returns a list of all instances of classObject encountered.
         '''
         row, col = coords
-        entityList = []
+        entities = []
         for entity in self.board[row][col]:
             if isinstance(entity, classObject):
-                entityList.append(entity)
-        return entityList
+                entities.append(entity)
+        return entities
         
-    def getEntityOfClasses(self, coords, classList):
+    def getEntityOfClasses(self, coords, classes):
         '''
-        Iterates over list at given coords and returns first instance of any object in classList encountered.
+        Iterates over list at given coords and returns first instance of any object in classes encountered.
         '''
         row, col = coords
         for entity in self.board[row][col]:
-            for classObject in classList:
+            for classObject in classes:
                 if isinstance(entity, classObject):
                     return entity
         return None     
@@ -144,14 +157,15 @@ class Board:
         '''
         Raises labels so that labels with the highest priorities appear on top.
         '''
-        for entity in self.entities:
+        for entity in self.organisms:
             cell = self.board[entity.row][entity.col]
             for i in reversed(range(len(cell))):
                 if cell[i].label:
                     cell[i].label.raise_()
 
-    def sortEntities(self):
-        self.entities.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
+
+    def sortOrganisms(self):
+        self.organisms.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
 
     def populateBoard(self):
         herbivoreChance = 8
@@ -181,17 +195,20 @@ class Simulation:
         self.window.startTimer(self.tick)
 
     def addEntities(self):
-        for entity in self.board.entities:
-            self.window.addEntity(entity)
+        for organism in self.board.organisms:
+            self.window.addEntity(organism)
 
     def tick(self):
-        for entity in self.board.entities:
-            entity.simulate()
-            self.window.moveEntity(entity)
-            entity.getStatus()
-        self.board.sortEntities()
+        for organism in self.board.organisms:
+            organism.simulate()
+            self.window.moveEntity(organism)
+            organism.getStatus()
+        for particle in self.board.particles:
+            particle.simulate()
+        self.board.sortOrganisms()
         self.board.raiseLabels()
-        print(len(self.board.entities))
+        print('organimsms: ', len(self.board.organisms))
+        print('particles:', len(self.board.particles))
             
 
 if __name__ == '__main__':

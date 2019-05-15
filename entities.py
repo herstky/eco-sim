@@ -77,6 +77,9 @@ class Entity:
         self.board.moveEntity(self, (newRow, newCol))
 
     def validCell(self, direction):
+        '''
+        Checks if adjacent cell in the given direction is a valid position on the board.
+        '''
         row, col = self.getCoordsAtDirection(direction)
         if not self.board.validPosition((row, col)):
             return False
@@ -190,6 +193,7 @@ class Animal(Organism):
         self.body.baselineEnergyExpenditure()
         self.move()
         self.body.metabolize()
+        scent = Particle(self.board, (self.row, self.col), self.__class__, (self.row, self.col), 50)
         self.age += 1
 
     def move(self):
@@ -314,53 +318,46 @@ class Particle(Entity):
     Particles start at an altitude above ground level and float to adjacent cells until they hit the
     ground. Particles behave independently of other entities and can therefore be simulated in parallel. 
     '''
-    def __init__(self, board, sourceClass, sourceCoords, count=1000, diffusionRate=.25):
+    def __init__(self, board, coords, sourceClass, sourceCoords, count=1000, diffusionRate=.1, degradationRate=.25):
         super().__init__(board)
         self.name = 'Particle'
         self.sourceClass = sourceClass
         self.sourceCoords = sourceCoords
         self.count = count
         self.diffusionRate = diffusionRate # the fraction of count that will diffuse to adjacent cells
+        self.degradationRate = degradationRate
+        self.addToBoard(coords)
 
     def simulate(self):
         self.degrade()
         self.diffuse()
 
-    def diffuse(Self):
+    def degrade(self):
+        self.count -= 10 + round(self.degradationRate * self.count)
+        if self.count <= 0:
+            self.board.deleteEntity(self)
+
+    def diffuse(self):
+        if self.count <= 0:
+            return
         coords = (self.row, self.col)
         directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
         diffusingParticles = round(self.count * self.diffusionRate)
         self.count -= diffusingParticles
         for direction in directions:
+            if not self.validCell(direction):
+                break
             particlesPerAdjacentCell = diffusingParticles // len(directions)
             adjacentCoords = self.getCoordsAtDirection(direction)
-            for particle in particlesAtCell:
-                if particle.sourceClass == self.sourceClass:
-                    particlesPerAdjacentCell += particle.count
-                    self.board.deleteEntity(particle)
-            self.board.addEntity(adjacentCoords, Particle(self.board, self.sourceClass, coords, particlesPerAdjacentCell))
-            particlesAtCell = self.board.getEntitiesOfClass(adjacentCoords, Particle)
-           
+            Particle(self.board, adjacentCoords, self.sourceClass, (self.row, self.col), particlesPerAdjacentCell)
 
-
-    def degrade(self):
-        pass
-
-    def stack(self):
-        pass
-
-    def move(self):
-        if self.landed:
-            return
-        if self.altitude > 1:
-            if self.validCell(self.direction):
-                self.moveInDirection(self.direction)
-                self.altitude += uniform(-1, .3)
-            else:
-                self.board.deleteEntity(self)
-        else:
-            self.altitude = 0
-            self.landed = True
+    def addToBoard(self, coords):
+        particlesAtCell = self.board.getEntitiesOfClass(coords, Particle)
+        for particle in particlesAtCell:
+            if particle.sourceClass == self.sourceClass:
+                self.count += particle.count
+                self.board.deleteEntity(particle)
+        self.board.addEntity(self, coords)
 
 
 class Seed(Organism):
@@ -378,8 +375,3 @@ class Seed(Organism):
     def sprout(self):
         self.board.replaceEntity(self, Plant(self.board, 10))
     
-
-class Scent(Particle):
-    def __init__(self, board, sourceClass, sourceCoords, count=1000):
-        super().__init__(board, source, altitude, concentrationDirection)
-        self.name = 'Scent'
