@@ -3,6 +3,8 @@ from constants import *
 from body import *
 
 # TODO clean up checking for valid entities and indexes
+# TODO plants and seeds slowing performance. calculate seed landing cell and 
+#      allow plants to be eaten over multiple steps
 
 
 class Entity:
@@ -39,17 +41,29 @@ class Entity:
     # returns a tuple containing the new coords, with the row as the first element
     # and the col as the second. returned coords must be checked for validity by 
     # calling function
-    def getCoordsAtDirection(self, direction):
+    def getCoordsAtDirection(self, direction, magnitude=1):
         row = self.row
         col = self.col
         if direction == 'N':
-                row -= 1
+            row -= magnitude
+        elif direction == 'NE':
+            row -= magnitude
+            col += magnitude
         elif direction == 'E':
-                col += 1
+            col += magnitude
+        elif direction == 'SE':
+            row += magnitude
+            col += magnitude
         elif direction == 'S':
-                row += 1
+            row += magnitude
+        elif direction == 'SW':
+            row += magnitude
+            col -= magnitude
         elif direction == 'W':
-                col -= 1
+            col -= magnitude
+        elif direction == 'NW':
+            row -= magnitude
+            col -= magnitude
         return (row, col)
 
     # moves the entity to the adjacent cell in the given direction
@@ -275,27 +289,32 @@ class Plant(Organism):
         self.body.grow()
 
     def spreadSeeds(self):
-        directions = ['N', 'E', 'S', 'W']
-        for direction in directions:
-            roll = randint(1, 100)
-            if roll <= self.germinationChance and self.validCell(direction):
-                coords = self.getCoordsAtDirection(direction)
-                altitude = uniform(2, 6)
-                daysToSprout = randint(10, 20)
-                self.board.addEntity(Seed(self.board, altitude, direction, daysToSprout), coords)
-
+        directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+        direction = directions[randint(0, 3)]
+        magnitude = randint(1, 10)
+        coords = self.getCoordsAtDirection(direction, magnitude)
+        if self.board.validPosition(coords):
+            if not self.board.cellContains(coords, Plant) and not self.board.cellContains(coords, Seed):
+                self.board.addEntity(Plant(self.board, 10), coords)
 
 # Particles start at an altitude above ground level and float in the wind until they hit the ground
 class Particle(Entity):
-    def __init__(self, board, altitude=6, direction='N'):
+    def __init__(self, board, concentrationDirection='N', altitude=6):
         super().__init__(board)
         self.name = 'Particle'
+        self.concentrationDirection = concentrationDirection # which direction the smell originated from
         self.altitude = altitude
         self.landed = False
-        self.direction = direction
+        self.count = 1000
 
     def simulate(self):
-        self.move()
+        self.diffuse()
+
+    def diffuse(Self):
+        pass
+
+    def stack(self):
+        pass
 
     def move(self):
         if self.landed:
@@ -315,32 +334,17 @@ class Particle(Entity):
         self.landed = True
 
 
-class Seed(Particle):
-    def __init__(self, board, altitude=3, direction='N', daysToSprout=6):
-        super().__init__(board, altitude, direction)
+class Seed(Organism):
+    def __init__(self, board, daysToSprout=6):
+        super().__init__(board)
         self.name = 'Seed'
         self.daysToSprout = daysToSprout
-        self.planted = False
 
     def simulate(self):
-        super().simulate()
-        if self.planted:
-            if self.daysToSprout > 0:
-                self.daysToSprout -= 1
-            else:
-                self.sprout()
-
-    def land(self):
-        super().land()
-        coords = (self.row, self.col)
-        if self.board.cellContains(coords, Plant):
-            self.board.deleteEntity(self)
-        elif self.board.cellContains(coords, Seed):
-            for entity in self.board.getEntitiesOfClass(coords, Seed):
-                if entity.planted == True:
-                    self.board.deleteEntity(self)
-                    return
-            self.planted = True
+        if self.daysToSprout > 0:
+            self.daysToSprout -= 1
+        else:
+            self.sprout()
                 
     def sprout(self):
         self.board.replaceEntity(self, Plant(self.board, 10))

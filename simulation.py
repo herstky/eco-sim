@@ -161,6 +161,7 @@ class Simulation:
             entity.getStatus()
         self.board.sortEntities()
         self.board.raiseLabels()
+        print(len(self.board.entities))
             
 
 if __name__ == '__main__':
