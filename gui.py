@@ -3,8 +3,6 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import QTimer
 from PyQt5.QtCore import Qt
 
-import sys
-
 class Window(QMainWindow):
     def __init__(self, left=50, top=50, width=1200, height=800):
         super().__init__()

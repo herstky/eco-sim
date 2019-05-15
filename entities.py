@@ -3,9 +3,6 @@ from constants import *
 from body import *
 
 # TODO clean up checking for valid entities and indexes
-# TODO tune animal starvation
-# TODO animals appear to be able to occupy same space
-# TODO plants should spread seeds which are latent and grow into plants
 
 
 class Entity:
@@ -230,8 +227,8 @@ class Herbivore(Animal):
         self.name ='Herbivore'
         self.texture = 'assets/blueCircle.png'
         self.diet.append(Plant)
-        self.maturityAge = 8
-        self.stepsToBreed = randint(3, 6)
+        self.maturityAge = 10
+        self.stepsToBreed = randint(6, 12)
 
     def move(self):
         if not self.attemptToEat():
@@ -245,8 +242,8 @@ class Carnivore(Animal):
         self.name = 'Carnivore'
         self.texture = 'assets/orangeCircle.png'
         self.diet.append(Herbivore)
-        self.maturityAge = 12
-        self.stepsToBreed = randint(8, 12)
+        self.maturityAge = 15
+        self.stepsToBreed = randint(10, 16)
 
     def move(self):
         hasEaten = False
@@ -265,7 +262,7 @@ class Omnivore(Animal):
   
 
 class Plant(Organism):
-    def __init__(self, board, mass=1, massCapacity=35, germinationChance=10):
+    def __init__(self, board, mass=1, massCapacity=35, germinationChance=20):
         super().__init__(board)
         self.name = 'Plant'
         self.displayPriority = 5
@@ -283,8 +280,8 @@ class Plant(Organism):
             roll = randint(1, 100)
             if roll <= self.germinationChance and self.validCell(direction):
                 coords = self.getCoordsAtDirection(direction)
-                altitude = uniform(1, 3)
-                daysToSprout = randint(6, 20)
+                altitude = uniform(2, 6)
+                daysToSprout = randint(12, 24)
                 self.board.addEntity(Seed(self.board, altitude, direction, daysToSprout), coords)
 
 
@@ -346,7 +343,7 @@ class Seed(Particle):
             self.planted = True
                 
     def sprout(self):
-        self.board.replaceEntity(self, Plant(self.board))
+        self.board.replaceEntity(self, Plant(self.board, 5))
     
 
 class Scent(Particle):
