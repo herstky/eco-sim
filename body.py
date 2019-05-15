@@ -120,11 +120,11 @@ class AnimalBody(Body):
     # Resets the total energy expenditure to the baseline. This method should be called before 
     # any other energy expenditure calculations are done
     def baselineEnergyExpenditure(self):
-        self.totalEnergyExpenditure = 5000 + 80 * self.mass
+        self.totalEnergyExpenditure = 4000 + 100 * self.mass
 
     # magnitude should be approximately 1 for moving a single space, 2-3 for chasing prey, etc
     def actionEnergyExpenditure(self, magnitude):
-        self.totalEnergyExpenditure += 2000 + magnitude * self.mass * 150 
+        self.totalEnergyExpenditure += 3000 + magnitude * self.mass * 100
 
 
 class PlantBody(Body):

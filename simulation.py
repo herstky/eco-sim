@@ -125,7 +125,7 @@ class Board:
 
     def populateBoard(self):
         herbivoreChance = 8
-        carnivoreChance = 2
+        carnivoreChance = 1
         plantChance = 70
         for row in range(self.rows):
             for col in range(self.cols):

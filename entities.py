@@ -227,8 +227,8 @@ class Herbivore(Animal):
         self.name ='Herbivore'
         self.texture = 'assets/blueCircle.png'
         self.diet.append(Plant)
-        self.maturityAge = 10
-        self.stepsToBreed = randint(6, 12)
+        self.maturityAge = 12
+        self.stepsToBreed = randint(9, 13)
 
     def move(self):
         if not self.attemptToEat():
@@ -242,8 +242,8 @@ class Carnivore(Animal):
         self.name = 'Carnivore'
         self.texture = 'assets/orangeCircle.png'
         self.diet.append(Herbivore)
-        self.maturityAge = 15
-        self.stepsToBreed = randint(10, 16)
+        self.maturityAge = 20
+        self.stepsToBreed = randint(16, 20)
 
     def move(self):
         hasEaten = False
@@ -262,7 +262,7 @@ class Omnivore(Animal):
   
 
 class Plant(Organism):
-    def __init__(self, board, mass=1, massCapacity=35, germinationChance=20):
+    def __init__(self, board, mass=1, massCapacity=35, germinationChance=30):
         super().__init__(board)
         self.name = 'Plant'
         self.displayPriority = 5
@@ -281,7 +281,7 @@ class Plant(Organism):
             if roll <= self.germinationChance and self.validCell(direction):
                 coords = self.getCoordsAtDirection(direction)
                 altitude = uniform(2, 6)
-                daysToSprout = randint(12, 24)
+                daysToSprout = randint(10, 20)
                 self.board.addEntity(Seed(self.board, altitude, direction, daysToSprout), coords)
 
 
@@ -303,7 +303,7 @@ class Particle(Entity):
         if self.altitude > 1:
             if self.validCell(self.direction):
                 self.moveInDirection(self.direction)
-                self.altitude += uniform(-1.5, .3)
+                self.altitude += uniform(-1, .3)
             else:
                 self.board.deleteEntity(self)
         else:
@@ -343,7 +343,7 @@ class Seed(Particle):
             self.planted = True
                 
     def sprout(self):
-        self.board.replaceEntity(self, Plant(self.board, 5))
+        self.board.replaceEntity(self, Plant(self.board, 10))
     
 
 class Scent(Particle):
