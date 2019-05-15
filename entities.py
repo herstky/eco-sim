@@ -38,10 +38,13 @@ class Entity:
     def randomizeMembers(self):
         pass
 
-    # returns a tuple containing the new coords, with the row as the first element
-    # and the col as the second. returned coords must be checked for validity by 
-    # calling function
+
     def getCoordsAtDirection(self, direction, magnitude=1):
+        '''
+        Returns a tuple containing the new coords, with the row as the first element
+        and the col as the second. Returned coords must be checked for validity by 
+        calling function
+        '''
         row = self.row
         col = self.col
         if direction == 'N':
@@ -66,8 +69,10 @@ class Entity:
             col -= magnitude
         return (row, col)
 
-    # moves the entity to the adjacent cell in the given direction
     def moveInDirection(self, direction):
+        '''
+        Moves self to the adjacent cell in the given direction.
+        '''
         newRow, newCol = self.getCoordsAtDirection(direction)
         self.board.moveEntity(self, (newRow, newCol))
 
@@ -78,8 +83,10 @@ class Entity:
         else:
             return True
 
-    # checks if adjacent cell in specificed direction contains an entity in the validEntities list
     def checkForValidEntityFromList(self, direction, validClasses):
+        '''
+        Checks if adjacent cell in specificed direction contains an entity in the validClasses list.
+        '''
         row, col = self.getCoordsAtDirection(direction)
         if not self.board.validPosition((row, col)):
             return False
@@ -87,9 +94,11 @@ class Entity:
             if self.board.cellContains((row, col), classObject):
                 return True
             return False
-
-    # checks if the adjacent cell in the given direction contains a given object
+ 
     def containsAnimal(self, direction):
+        '''
+        Checks if the adjacent cell in the given direction contains an instance of Animal.
+        '''
         row, col = self.getCoordsAtDirection(direction)
         if not self.board.validPosition((row, col)):
             return False
@@ -98,8 +107,10 @@ class Entity:
         else:
             return False
 
-    # checks if the adjacent cell in the given direction is a valid cell and if it is empty
     def isEmpty(self, direction):
+        '''
+        Checks if the adjacent cell in the given direction is a valid board position and if it is empty.
+        '''
         row, col = self.getCoordsAtDirection(direction)
         if not self.board.validPosition((row, col)):
             return False
@@ -297,20 +308,31 @@ class Plant(Organism):
             if not self.board.cellContains(coords, Plant) and not self.board.cellContains(coords, Seed):
                 self.board.addEntity(Plant(self.board, 10), coords)
 
-# Particles start at an altitude above ground level and float in the wind until they hit the ground
-class Particle(Entity):
-    def __init__(self, board, concentrationDirection='N', altitude=6):
+
+class Particle(Entity): 
+    '''
+    Particles start at an altitude above ground level and float to adjacent cells until they hit the
+    ground. Particles behave independently of other entities and can therefore be simulated in parallel. 
+    '''
+    def __init__(self, board, sourceClass, sourceCoords, count=1000):
         super().__init__(board)
         self.name = 'Particle'
-        self.concentrationDirection = concentrationDirection # which direction the smell originated from
-        self.altitude = altitude
-        self.landed = False
-        self.count = 1000
+        self.sourceClass = sourceClass
+        self.sourceCoords = sourceCoords
+        self.count = count
 
     def simulate(self):
+        self.degrade()
         self.diffuse()
 
     def diffuse(Self):
+        coords = (self.row, self.col)
+        directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+        for direction in directions:
+            adjacentCoords = self.getCoordsAtDirection(direction)
+            self.board.addEntity(adjacentCoords, Particle(self.board, self.sourceClass, coords))
+
+    def degrade(self):
         pass
 
     def stack(self):
@@ -327,11 +349,7 @@ class Particle(Entity):
                 self.board.deleteEntity(self)
         else:
             self.altitude = 0
-            self.land()
-
-    # called when altitude reaches 0. will only be called once
-    def land(self):
-        self.landed = True
+            self.landed = True
 
 
 class Seed(Organism):
@@ -351,7 +369,6 @@ class Seed(Organism):
     
 
 class Scent(Particle):
-    def __init__(self, board, altitude=6, direction='N', intensity=3):
-        super().__init__(board, altitude, direction)
+    def __init__(self, board, source, altitude=6, concentrationDirection='N'):
+        super().__init__(board, source, altitude, concentrationDirection)
         self.name = 'Scent'
-        self.intensity = intensity
