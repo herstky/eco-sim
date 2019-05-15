@@ -314,12 +314,13 @@ class Particle(Entity):
     Particles start at an altitude above ground level and float to adjacent cells until they hit the
     ground. Particles behave independently of other entities and can therefore be simulated in parallel. 
     '''
-    def __init__(self, board, sourceClass, sourceCoords, count=1000):
+    def __init__(self, board, sourceClass, sourceCoords, count=1000, diffusionRate=.25):
         super().__init__(board)
         self.name = 'Particle'
         self.sourceClass = sourceClass
         self.sourceCoords = sourceCoords
         self.count = count
+        self.diffusionRate = diffusionRate # the fraction of count that will diffuse to adjacent cells
 
     def simulate(self):
         self.degrade()
@@ -328,9 +329,19 @@ class Particle(Entity):
     def diffuse(Self):
         coords = (self.row, self.col)
         directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+        diffusingParticles = round(self.count * self.diffusionRate)
+        self.count -= diffusingParticles
         for direction in directions:
+            particlesPerAdjacentCell = diffusingParticles // len(directions)
             adjacentCoords = self.getCoordsAtDirection(direction)
-            self.board.addEntity(adjacentCoords, Particle(self.board, self.sourceClass, coords))
+            for particle in particlesAtCell:
+                if particle.sourceClass == self.sourceClass:
+                    particlesPerAdjacentCell += particle.count
+                    self.board.deleteEntity(particle)
+            self.board.addEntity(adjacentCoords, Particle(self.board, self.sourceClass, coords, particlesPerAdjacentCell))
+            particlesAtCell = self.board.getEntitiesOfClass(adjacentCoords, Particle)
+           
+
 
     def degrade(self):
         pass
@@ -369,6 +380,6 @@ class Seed(Organism):
     
 
 class Scent(Particle):
-    def __init__(self, board, source, altitude=6, concentrationDirection='N'):
+    def __init__(self, board, sourceClass, sourceCoords, count=1000):
         super().__init__(board, source, altitude, concentrationDirection)
         self.name = 'Scent'

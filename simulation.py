@@ -16,8 +16,10 @@ class Board:
     def __getitem__(self, row):
         return self.board[row]
 
-    # adds entity to entities list and inserts it at the front of the list at the given coords
     def addEntity(self, entity, coords):
+        '''
+        Adds entity to entities list and inserts it to the front of the list at the given coords.
+        '''
         entity.row, entity.col = coords
         if entity not in self.entities:
             self.entities.append(entity)
@@ -32,33 +34,47 @@ class Board:
                 i += 1 
             cell.insert(i, entity)
  
-    # removes entity from board, but leaves it in the entities list
+    
     def removeEntityFromBoard(self, entity):
+        '''
+        Removes entity from board, but leaves it in the entities list.
+        '''
         row = entity.row
         col = entity.col
         entity.row = None
         entity.col = None
         self.board[row][col].remove(entity)
 
-    # completely destroys entity
     def deleteEntity(self, entity):
+        '''
+        Completely destroys entity.
+        '''
         self.entities.remove(entity)
         self.removeEntityFromBoard(entity)
         if entity.label:
             entity.label.hide()
 
     def replaceEntity(self, target, replacement):
+        '''
+        Completely destroys target and replaces it with replacement.
+        '''
         row = target.row
         col = target.col
         self.addEntity(replacement, (row, col))
         self.deleteEntity(target)
 
-    # returns entity at the front of the list at the given coords
     def getEntity(self, coords):
+        '''
+        Returns entity at the front of the list at the given coords.
+
+        '''
         row, col = coords
         return self.board[row][col][0]
 
     def getEntityOfClass(self, coords, classObject):
+        '''
+        Iterates over list at given coords and returns the first instance of classObject encountered.
+        '''
         row, col = coords
         for entity in self.board[row][col]:
             if isinstance(entity, classObject):
@@ -66,6 +82,9 @@ class Board:
         return None
 
     def getEntitiesOfClass(self, coords, classObject):
+        '''
+        Iterates over list at given coords and returns a list of all instances of classObject encountered.
+        '''
         row, col = coords
         entityList = []
         for entity in self.board[row][col]:
@@ -73,9 +92,10 @@ class Board:
                 entityList.append(entity)
         return entityList
         
-
-
     def getEntityOfClasses(self, coords, classList):
+        '''
+        Iterates over list at given coords and returns first instance of any object in classList encountered.
+        '''
         row, col = coords
         for entity in self.board[row][col]:
             for classObject in classList:
@@ -83,8 +103,10 @@ class Board:
                     return entity
         return None     
 
-    # checks if cell contains an instance of the given class
     def cellContains(self, coords, classObject):
+        '''
+        Checks if cell at coords contains an instance of classObject.
+        '''
         row, col = coords
         if classObject is None:
             if len(self.board[row][col]) == 0:
@@ -96,9 +118,11 @@ class Board:
                 return True
         return False
 
-    # insert entity at the front of the list at the given coords
-    # also removes entity from previous location
     def moveEntity(self, entity, coords):
+        '''
+        Inserts entity to the front of the list at the given coords
+        and removes entity from previous location.
+        '''
         row, col = coords
         if entity.row is not None and entity.col is not None:
             self.removeEntityFromBoard(entity)
@@ -107,6 +131,9 @@ class Board:
         self.addEntity(entity, coords)
 
     def validPosition(self, coords):
+        '''
+        Checks if coords are a valid position on the board.
+        '''
         row, col = coords
         if row < 0 or row > self.rows - 1 or col < 0 or col > self.cols - 1:
             return False
@@ -114,6 +141,9 @@ class Board:
             return True
 
     def raiseLabels(self):
+        '''
+        Raises labels so that labels with the highest priorities appear on top.
+        '''
         for entity in self.entities:
             cell = self.board[entity.row][entity.col]
             for i in reversed(range(len(cell))):
