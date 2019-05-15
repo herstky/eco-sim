@@ -127,12 +127,12 @@ class Organism(Entity):
      
 
 class Animal(Organism):
-    def __init__(self, board, randomize=False):
+    def __init__(self, board, mass=50, massCapacity=100, randomize=False):
         super().__init__(board, randomize)
         self.name = 'Animal'
         self.displayPriority = 1
         self.diet = []
-        self.body = AnimalBody()
+        self.body = AnimalBody(mass, massCapacity)
         self.strength = 0
         self.strengthBaseline = 0
         self.stepsToBreed = 6
@@ -222,8 +222,8 @@ class Animal(Organism):
 
 
 class Herbivore(Animal):
-    def __init__(self, board, randomize=False):
-        super().__init__(board, randomize)
+    def __init__(self, board, mass=20, massCapacity=60, randomize=False):
+        super().__init__(board, mass, massCapacity, randomize)
         self.name ='Herbivore'
         self.texture = 'assets/blueCircle.png'
         self.diet.append(Plant)
@@ -237,8 +237,8 @@ class Herbivore(Animal):
 
 
 class Carnivore(Animal):
-    def __init__(self, board, randomize=False):
-        super().__init__(board, randomize)
+    def __init__(self, board, mass=50, massCapacity=200, randomize=False):
+        super().__init__(board, mass, massCapacity, randomize)
         self.name = 'Carnivore'
         self.texture = 'assets/orangeCircle.png'
         self.diet.append(Herbivore)
