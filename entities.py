@@ -11,6 +11,7 @@ class Entity:
     def __init__(self, board):
         self.board = board
         self.name = 'Entity'
+        self.processed = True
         self.texture = None
         self.label = None
         self.row = None
@@ -30,6 +31,7 @@ class Entity:
         self.board.removeEntityFromBoard(self)
 
     def die(self):
+        self.processed = True # ensures entity is not simulated after dying
         self.board.deleteEntity(self)
 
     def getStatus(self):
@@ -193,7 +195,7 @@ class Animal(Organism):
         self.body.baselineEnergyExpenditure()
         self.move()
         self.body.metabolize()
-        scent = Particle(self.board, (self.row, self.col), self.__class__, (self.row, self.col), 50)
+        scent = Particle(self.board, (self.row, self.col), self.__class__, (self.row, self.col), 75)
         self.age += 1
 
     def move(self):
@@ -313,16 +315,15 @@ class Plant(Organism):
                 self.board.addEntity(Seed(self.board, randint(12, 20)), coords)
 
 
-class Particle(Entity): 
+class Particle(): 
     '''
     Particles start at an altitude above ground level and float to adjacent cells until they hit the
     ground. Particles behave independently of other entities and can therefore be simulated in parallel. 
     '''
-    def __init__(self, board, coords, sourceClass, sourceCoords, count=1000, diffusionRate=.1, degradationRate=.1):
-        super().__init__(board)
+    def __init__(self, board, sourceClass, count=1000, diffusionRate=.1, degradationRate=.1):
+        self.board = board
         self.name = 'Particle'
         self.sourceClass = sourceClass
-        self.sourceCoords = sourceCoords
         self.count = count
         self.diffusionRate = diffusionRate # the fraction of count that will diffuse to adjacent cells
         self.degradationRate = degradationRate
@@ -335,7 +336,7 @@ class Particle(Entity):
     def degrade(self):
         self.count -= 10 + round(self.degradationRate * self.count)
         if self.count <= 0:
-            self.board.deleteEntity(self)
+            self.die()
 
     def diffuse(self):
         if self.count <= 0:
@@ -352,13 +353,14 @@ class Particle(Entity):
             Particle(self.board, adjacentCoords, self.sourceClass, (self.row, self.col), particlesPerAdjacentCell)
 
     def addToBoard(self, coords):
-        particlesAtCell = self.board.getEntitiesOfClass(coords, Particle)
-        for particle in particlesAtCell:
-            if particle.sourceClass == self.sourceClass:
-                self.count += particle.count
-                self.board.deleteEntity(particle)
         self.board.addEntity(self, coords)
 
+    def consolidate(self, coords):
+        particlesAtCell = self.board.getEntitiesOfClass(coords, Particle)
+        for particle in particlesAtCell:
+            if particle.sourceClass == self.sourceClass and particle is not self:
+                self.count += particle.count
+                particle.die()
 
 class Seed(Organism):
     def __init__(self, board, daysToSprout=6):

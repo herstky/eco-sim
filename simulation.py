@@ -1,33 +1,69 @@
-from entities import *
+from multiprocessing.dummy import Pool as ThreadPool
 from random import randint
-from time import sleep
 import sys
 
+from utilities import functionTimer
+from entities import *
 from gui import *
+
+class Cell:
+    def __init__(self, board):
+        self.board = board
+        self.particles = []
+        self.incomingParticles = []
+        self.outgoingParticles = []
+        self.entities = []
+
+    def transferParticles(self, particle, count, coordsIn, coordsOut):
+        incomingParticle = Particle(particle.board, particle.sourceClass, count)
+        outgoingParticle = Particle(particle.board, particle.sourceClass, count)
+        rowIn, colIn = coordsIn
+        rowOut, colOut = coordsOut
+        self.board[rowIn][colIn].cell.incomingParticles.append(incomingParticle)
+        self.board[rowOut][colOut].cell.outgoingParticles.append(outgoingParticle)
+        
+
+
+    def mapToParticles(self, function):
+        for particle in particles:
+            function(particle)
+
+    def mapToEntities(self, function):
+        for entity in entities:
+            function(entity)
+
+    def consolidateParticles(self):
+        for incomingParticle in self.incomingParticles:
+            for particle in self.particles:
+                if incomingParticle.sourceClass is particle.sourceClass:
+                    particle.count += incomingParticle.count
+                    break
+            self.particles.append(incomingParticle)
+
+        for outgoingParticle in self.outgoingParticles:
+            for particle in self.particles:
+                if outgoingParticle.sourceClass is particle.sourceClass:
+                    particle.count -= outgoingParticle.count
+                    if particle.count <= 0:
+                        self.particles.remove(outgoingParticle)
+                    break
+
 
 class Board:
     def __init__(self, window, rows=20, cols=30):
         self.window = window
         self.rows = rows
         self.cols = cols
-        self.organisms = []
-        self.particles = []
-        self.board = [[[] for col in range(self.cols)] for row in range(self.rows)]
+        self.entities = []
+        self.board = [[Cell(self) for col in range(self.cols)] for row in range(self.rows)]
         self.populateBoard()
 
     def __getitem__(self, row):
         return self.board[row]
 
-    def getEntityList(self, entity):
-        '''
-        Returns the list corresponding to the class of entity.
-        '''
-        if isinstance(entity, Organism):
-            return self.organisms
-        elif isinstance(entity, Particle):
-            return self.particles
-        else:
-            return None
+    def queueEntities(self):
+        for entity in self.entities:
+            entity.processed = False
 
     def addEntity(self, entity, coords):
         '''
@@ -35,18 +71,17 @@ class Board:
         at coords. Cell order is based on entity.displayPriority
         '''
         entity.row, entity.col = coords
-        entities = self.getEntityList(entity)
-        if entity not in entities:
-            entities.append(entity)
+        if entity not in self.entities:
+            self.entities.append(entity)
             self.window.addEntity(entity)
         i = 0
-        cell = self.board[entity.row][entity.col]
-        if len(cell) == 0:
-            cell.insert(0, entity)
+        cellEntities = self.board[entity.row][entity.col].entities
+        if len(cellEntities) == 0:
+            cellEntities.insert(0, entity)
         else:
-            while i < len(cell) and entity.displayPriority > cell[i].displayPriority:
+            while i < len(cellEntities) and entity.displayPriority > cellEntities[i].displayPriority:
                 i += 1 
-            cell.insert(i, entity)
+            cellEntities.insert(i, entity)
  
     def removeEntityFromBoard(self, entity):
         '''
@@ -56,14 +91,13 @@ class Board:
         col = entity.col
         entity.row = None
         entity.col = None
-        self.board[row][col].remove(entity)
+        self.board[row][col].entities.remove(entity)
 
     def deleteEntity(self, entity):
         '''
         Completely destroys entity.
         '''
-        entities = self.getEntityList(entity)
-        entities.remove(entity)
+        self.entities.remove(entity)
         self.removeEntityFromBoard(entity)
         if entity.label:
             entity.label.hide()
@@ -101,7 +135,7 @@ class Board:
         '''
         row, col = coords
         entities = []
-        for entity in self.board[row][col]:
+        for entity in self.board[row][col].entities:
             if isinstance(entity, classObject):
                 entities.append(entity)
         return entities
@@ -111,7 +145,7 @@ class Board:
         Iterates over list at given coords and returns first instance of any object in classes encountered.
         '''
         row, col = coords
-        for entity in self.board[row][col]:
+        for entity in self.board[row][col].entities:
             for classObject in classes:
                 if isinstance(entity, classObject):
                     return entity
@@ -123,11 +157,11 @@ class Board:
         '''
         row, col = coords
         if classObject is None:
-            if len(self.board[row][col]) == 0:
+            if len(self.board[row][col].entities) == 0:
                 return True
             else:
                 return False
-        for entity in self.board[row][col]:
+        for entity in self.board[row][col].entities:
             if isinstance(entity, classObject):
                 return True
         return False
@@ -158,15 +192,14 @@ class Board:
         '''
         Raises labels so that labels with the highest priorities appear on top.
         '''
-        for entity in self.organisms:
-            cell = self.board[entity.row][entity.col]
-            for i in reversed(range(len(cell))):
-                if cell[i].label:
-                    cell[i].label.raise_()
+        for entity in self.entities:
+            cellEntities = self.board[entity.row][entity.col].entities
+            for i in reversed(range(len(cellEntities))):
+                if cellEntities[i].label:
+                    cellEntities[i].label.raise_()
 
-
-    def sortOrganisms(self):
-        self.organisms.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
+    def sortEntities(self):
+        self.entities.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
 
     def populateBoard(self):
         herbivoreChance = 8
@@ -182,9 +215,17 @@ class Board:
                 elif roll <= herbivoreChance + carnivoreChance:
                     self.addEntity(Carnivore(self), (row, col))
 
+    def consolidateParticles(self):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                for entity in self.board[row][col].entities:
+                    if isinstance(entity, Particle):
+                        entity.consolidate((row, col))
+
 class Simulation:
     def __init__(self, window, iterations=10, waitBetweenEntities=0.25, waitBetweenRounds=0):
         self.board = Board(window)
+        self.iteration = 0
         self.window = window
         self.iterations = iterations
         self.waitBetweenEntities = waitBetweenEntities
@@ -196,21 +237,65 @@ class Simulation:
         self.window.startTimer(self.tick)
 
     def addEntities(self):
-        for organism in self.board.organisms:
-            self.window.addEntity(organism)
+        for entity in self.board.entities:
+            self.window.addEntity(entity)
 
-    def tick(self):
-        for organism in self.board.organisms:
-            organism.simulate()
-            self.window.moveEntity(organism)
-            organism.getStatus()
-        for particle in self.board.particles:
-            particle.simulate()
-        self.board.sortOrganisms()
+    def run(self, entity):
+        if entity.processed:
+            return
+        entity.simulate()
+        self.window.moveEntity(entity)
+        entity.getStatus()
+
+
+
+    @functionTimer
+    def tick1(self):
+        self.board.queueEntities()
+        particles = []
+        organisms = []
+        for entity in self.board.entities:
+            if isinstance(entity, Particle):
+                particles.append(entity)
+            else:
+                organisms.append(entity)
+        for organism in organisms:
+            self.run(organism)
+        for particle in particles:
+            self.run(particle)
+
+        self.board.consolidateParticles()
+        self.board.sortEntities()
         self.board.raiseLabels()
-        print('organisms:', len(self.board.organisms))
-        print('particles:', len(self.board.particles))
+        print('entities:', len(self.board.entities))
+        self.iteration += 1
+
+    @functionTimer
+    def tick2(self):
+        self.board.queueEntities()        
+        pool = ThreadPool(8)
+        results = pool.map(self.run, self.board.entities)
+        pool.close()
+        pool.join()
+
+        self.board.consolidateParticles()
+        self.board.sortEntities()
+        self.board.raiseLabels()
+        print('entities:', len(self.board.entities))
+        self.iteration += 1
             
+
+    @functionTimer
+    def tick(self):
+        self.board.queueEntities()
+        for entity in self.board.entities:
+            self.run(entity)
+        self.board.consolidateParticles()
+        self.board.sortEntities()
+        self.board.raiseLabels()
+        print('entities:', len(self.board.entities))
+        self.iteration += 1
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
