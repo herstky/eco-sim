@@ -271,8 +271,8 @@ class Carnivore(Animal):
         self.name = 'Carnivore'
         self.texture = 'assets/orangeCircle.png'
         self.diet.append(Herbivore)
-        self.maturityAge = 20
-        self.stepsToBreed = randint(16, 20)
+        self.maturityAge = 18
+        self.stepsToBreed = randint(14, 18)
 
     def move(self):
         hasEaten = False
@@ -305,12 +305,12 @@ class Plant(Organism):
 
     def spreadSeeds(self):
         directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-        direction = directions[randint(0, 3)]
+        direction = directions[randint(0, len(directions) - 1)]
         magnitude = randint(1, 10)
         coords = self.getCoordsAtDirection(direction, magnitude)
         if self.board.validPosition(coords):
             if not self.board.cellContains(coords, Plant) and not self.board.cellContains(coords, Seed):
-                self.board.addEntity(Plant(self.board, 10), coords)
+                self.board.addEntity(Seed(self.board, randint(12, 20)), coords)
 
 
 class Particle(Entity): 
@@ -318,7 +318,7 @@ class Particle(Entity):
     Particles start at an altitude above ground level and float to adjacent cells until they hit the
     ground. Particles behave independently of other entities and can therefore be simulated in parallel. 
     '''
-    def __init__(self, board, coords, sourceClass, sourceCoords, count=1000, diffusionRate=.1, degradationRate=.25):
+    def __init__(self, board, coords, sourceClass, sourceCoords, count=1000, diffusionRate=.1, degradationRate=.1):
         super().__init__(board)
         self.name = 'Particle'
         self.sourceClass = sourceClass

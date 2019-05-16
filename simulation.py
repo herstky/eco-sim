@@ -1,6 +1,7 @@
 from entities import *
 from random import randint
 from time import sleep
+import sys
 
 from gui import *
 
@@ -17,7 +18,7 @@ class Board:
     def __getitem__(self, row):
         return self.board[row]
 
-    def getObjectList(self, entity):
+    def getEntityList(self, entity):
         '''
         Returns the list corresponding to the class of entity.
         '''
@@ -34,7 +35,7 @@ class Board:
         at coords. Cell order is based on entity.displayPriority
         '''
         entity.row, entity.col = coords
-        entities = self.getObjectList(entity)
+        entities = self.getEntityList(entity)
         if entity not in entities:
             entities.append(entity)
             self.window.addEntity(entity)
@@ -61,7 +62,7 @@ class Board:
         '''
         Completely destroys entity.
         '''
-        entities = self.getObjectList(entity)
+        entities = self.getEntityList(entity)
         entities.remove(entity)
         self.removeEntityFromBoard(entity)
         if entity.label:
@@ -207,7 +208,7 @@ class Simulation:
             particle.simulate()
         self.board.sortOrganisms()
         self.board.raiseLabels()
-        print('organimsms: ', len(self.board.organisms))
+        print('organisms:', len(self.board.organisms))
         print('particles:', len(self.board.particles))
             
 
