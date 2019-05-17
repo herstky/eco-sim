@@ -53,10 +53,13 @@ class Cell:
         pass
         while len(self.incomingParticles) > 0:
             incomingParticle = self.incomingParticles.pop()
+            particleAdded = False
             for particle in self.particles:
                 if incomingParticle.sourceClass == particle.sourceClass:
                     particle.count += incomingParticle.count
+                    particleAdded = True
                     break
+            if not particleAdded:    
                 self.particles.append(incomingParticle)
 
         while len(self.outgoingParticles) > 0:
