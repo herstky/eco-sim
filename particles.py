@@ -39,8 +39,7 @@ class Particle():
         and the col as the second. Returned coords must be checked for validity by 
         calling function
         '''
-        row = self.row
-        col = self.col
+        row, col = self.coords
         if direction == 'N':
             row -= magnitude
         elif direction == 'NE':
@@ -62,6 +61,16 @@ class Particle():
             row -= magnitude
             col -= magnitude
         return (row, col)
+
+    def validCell(self, direction):
+        '''
+        Checks if adjacent cell in the given direction is a valid position on the board.
+        '''
+        row, col = self.getCoordsAtDirection(direction)
+        if not self.board.validPosition((row, col)):
+            return False
+        else:
+            return True
 
     def simulate(self):
         self.degrade()

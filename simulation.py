@@ -35,10 +35,10 @@ class Cell:
 
     def transferParticles(self, particle, outputCoords, inputCoords, count):
         outputRow, outputCol = outputCoords
-        outgoingParticle = Particle(particle.board, particle.sourceClass, coords, count)
+        outgoingParticle = Particle(particle.board, particle.sourceClass, outputCoords, count)
         self.board[outputRow][outputCol].outgoingParticles.append(outgoingParticle)
         inputRow, inputCol = inputCoords
-        incomingParticle = Particle(particle.board, particle.sourceClass, coords, count)
+        incomingParticle = Particle(particle.board, particle.sourceClass, inputCoords, count)
         self.board[inputRow][inputRow].incomingParticles.append(incomingParticle)
 
     def mapToParticles(self, function):
@@ -47,25 +47,25 @@ class Cell:
 
     def mapToEntities(self, function):
         for entity in entities:
-            function(entity)
+            self.function(entity)
 
     def consolidateParticles(self):
-        for incomingParticle in self.incomingParticles:
+        while len(self.incomingParticles) > 0:
+            incomingParticle = self.incomingParticles.pop()
             for particle in self.particles:
                 if incomingParticle.sourceClass is particle.sourceClass:
                     particle.count += incomingParticle.count
                     break
             self.particles.append(incomingParticle)
-            self.incomingParticles.remove(incomingParticle)
 
-        for outgoingParticle in self.outgoingParticles:
+        while len(self.outgoingParticles) > 0:
+            outgoingParticle = self.outgoingParticles.pop()
             for particle in self.particles:
                 if outgoingParticle.sourceClass is particle.sourceClass:
                     particle.count -= outgoingParticle.count
                     if particle.count <= 0:
-                        self.particles.remove(outgoingParticle)
+                        self.particles.remove(particle)
                     break
-            self.outgoingParticles.remove(outgoingParticle)
 
 
 class Board:
@@ -234,6 +234,14 @@ class Board:
                 elif roll <= herbivoreChance + carnivoreChance:
                     self.addEntity(Carnivore(self), (row, col))
 
+    def mapToBoard(self, function):
+        '''
+        Calls function on every Cell in self.
+        '''
+        for row in self.rows:
+            for col in self.cols:
+                function(self.board[row][col])
+
     def consolidateParticles(self):
         for row in range(self.rows):
             for col in range(self.cols):
@@ -307,6 +315,11 @@ class Simulation:
         self.board.queueEntities()
         for entity in self.board.entities:
             self.run(entity)
+        for row in range(self.board.rows):
+            for col in range(self.board.cols):
+                for particle in self.board[row][col].particles:
+                    particle.simulate()
+
         self.board.consolidateParticles()
         self.board.sortEntities()
         self.board.raiseLabels()
