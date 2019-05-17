@@ -1,3 +1,5 @@
+from math import ceil
+
 class Particle(): 
     '''
     Particles start at an altitude above ground level and float to adjacent cells until they hit the
@@ -18,7 +20,7 @@ class Particle():
 
     def degrade(self):
         row, col = self.coords
-        self.board[row][col].destroyParticles(self, self.coords, 5 + round(self.degradationRate * self.count))
+        self.board[row][col].destroyParticles(self, self.coords, 5 + ceil(self.degradationRate * self.count))
 
     def diffuse(self):
         if self.count <= 0:

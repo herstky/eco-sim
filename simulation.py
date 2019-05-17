@@ -50,23 +50,26 @@ class Cell:
             self.function(entity)
 
     def consolidateParticles(self):
+        pass
         while len(self.incomingParticles) > 0:
             incomingParticle = self.incomingParticles.pop()
             for particle in self.particles:
-                if incomingParticle.sourceClass is particle.sourceClass:
+                if incomingParticle.sourceClass == particle.sourceClass:
                     particle.count += incomingParticle.count
                     break
-            self.particles.append(incomingParticle)
+                self.particles.append(incomingParticle)
 
         while len(self.outgoingParticles) > 0:
             outgoingParticle = self.outgoingParticles.pop()
             for particle in self.particles:
-                if outgoingParticle.sourceClass is particle.sourceClass:
+                if outgoingParticle.sourceClass == particle.sourceClass:
                     particle.count -= outgoingParticle.count
-                    if particle.count <= 0:
-                        self.particles.remove(particle)
-                    break
-
+                
+        for particle in self.particles:        
+            if particle.count <= 0:
+                self.particles.remove(particle)
+               
+                    
 
 class Board:
     def __init__(self, window, rows=20, cols=30):
@@ -319,7 +322,6 @@ class Simulation:
             for col in range(self.board.cols):
                 for particle in self.board[row][col].particles:
                     particle.simulate()
-
         self.board.consolidateParticles()
         self.board.sortEntities()
         self.board.raiseLabels()
