@@ -4,6 +4,7 @@ import sys
 
 from utilities import functionTimer
 from entities import *
+from particles import *
 from gui import *
 
 class Cell:
@@ -13,16 +14,32 @@ class Cell:
         self.incomingParticles = []
         self.outgoingParticles = []
         self.entities = []
-
-    def transferParticles(self, particle, count, coordsIn, coordsOut):
-        incomingParticle = Particle(particle.board, particle.sourceClass, count)
-        outgoingParticle = Particle(particle.board, particle.sourceClass, count)
-        rowIn, colIn = coordsIn
-        rowOut, colOut = coordsOut
-        self.board[rowIn][colIn].cell.incomingParticles.append(incomingParticle)
-        self.board[rowOut][colOut].cell.outgoingParticles.append(outgoingParticle)
         
+    def generateParticles(self, particle, coords, count):
+        '''
+        Creates incomingParticle object based on particle and adds it to the incomingParticles list
+        of the Cell at coords.
+        '''
+        row, col = coords
+        incomingParticle = Particle(particle.board, particle.sourceClass, coords, count)
+        self.board[row][col].incomingParticles.append(incomingParticle) 
 
+    def destroyParticles(self, particle, coords, count):
+        '''
+        Creates outgoingParticle object based on particle and adds it to the outgoingParticles list
+        of the Cell at coords.
+        '''
+        row, col = coords
+        outgoingParticle = Particle(particle.board, particle.sourceClass, coords, count)
+        self.board[row][col].outgoingParticles.append(outgoingParticle)
+
+    def transferParticles(self, particle, outputCoords, inputCoords, count):
+        outputRow, outputCol = outputCoords
+        outgoingParticle = Particle(particle.board, particle.sourceClass, coords, count)
+        self.board[outputRow][outputCol].outgoingParticles.append(outgoingParticle)
+        inputRow, inputCol = inputCoords
+        incomingParticle = Particle(particle.board, particle.sourceClass, coords, count)
+        self.board[inputRow][inputRow].incomingParticles.append(incomingParticle)
 
     def mapToParticles(self, function):
         for particle in particles:
@@ -39,6 +56,7 @@ class Cell:
                     particle.count += incomingParticle.count
                     break
             self.particles.append(incomingParticle)
+            self.incomingParticles.remove(incomingParticle)
 
         for outgoingParticle in self.outgoingParticles:
             for particle in self.particles:
@@ -47,6 +65,7 @@ class Cell:
                     if particle.count <= 0:
                         self.particles.remove(outgoingParticle)
                     break
+            self.outgoingParticles.remove(outgoingParticle)
 
 
 class Board:
@@ -218,9 +237,7 @@ class Board:
     def consolidateParticles(self):
         for row in range(self.rows):
             for col in range(self.cols):
-                for entity in self.board[row][col].entities:
-                    if isinstance(entity, Particle):
-                        entity.consolidate((row, col))
+                self.board[row][col].consolidateParticles()
 
 class Simulation:
     def __init__(self, window, iterations=10, waitBetweenEntities=0.25, waitBetweenRounds=0):

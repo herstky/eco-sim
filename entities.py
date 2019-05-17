@@ -1,6 +1,8 @@
 from random import randint, uniform
+
 from constants import *
 from body import *
+from particles import *
 
 # TODO clean up checking for valid entities and indexes
 # TODO plants and seeds slowing performance. calculate seed landing cell and 
@@ -39,7 +41,6 @@ class Entity:
 
     def randomizeMembers(self):
         pass
-
 
     def getCoordsAtDirection(self, direction, magnitude=1):
         '''
@@ -195,7 +196,8 @@ class Animal(Organism):
         self.body.baselineEnergyExpenditure()
         self.move()
         self.body.metabolize()
-        scent = Particle(self.board, (self.row, self.col), self.__class__, (self.row, self.col), 75)
+        scent = Particle(self.board, self.__class__, (self.row, self.col), 75)
+        scent.addToBoard((self.row, self.col))
         self.age += 1
 
     def move(self):
@@ -313,54 +315,7 @@ class Plant(Organism):
         if self.board.validPosition(coords):
             if not self.board.cellContains(coords, Plant) and not self.board.cellContains(coords, Seed):
                 self.board.addEntity(Seed(self.board, randint(12, 20)), coords)
-
-
-class Particle(): 
-    '''
-    Particles start at an altitude above ground level and float to adjacent cells until they hit the
-    ground. Particles behave independently of other entities and can therefore be simulated in parallel. 
-    '''
-    def __init__(self, board, sourceClass, count=1000, diffusionRate=.1, degradationRate=.1):
-        self.board = board
-        self.name = 'Particle'
-        self.sourceClass = sourceClass
-        self.count = count
-        self.diffusionRate = diffusionRate # the fraction of count that will diffuse to adjacent cells
-        self.degradationRate = degradationRate
-        self.addToBoard(coords)
-
-    def simulate(self):
-        self.degrade()
-        self.diffuse()
-
-    def degrade(self):
-        self.count -= 10 + round(self.degradationRate * self.count)
-        if self.count <= 0:
-            self.die()
-
-    def diffuse(self):
-        if self.count <= 0:
-            return
-        coords = (self.row, self.col)
-        directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-        diffusingParticles = round(self.count * self.diffusionRate)
-        self.count -= diffusingParticles
-        for direction in directions:
-            if not self.validCell(direction):
-                break
-            particlesPerAdjacentCell = diffusingParticles // len(directions)
-            adjacentCoords = self.getCoordsAtDirection(direction)
-            Particle(self.board, adjacentCoords, self.sourceClass, (self.row, self.col), particlesPerAdjacentCell)
-
-    def addToBoard(self, coords):
-        self.board.addEntity(self, coords)
-
-    def consolidate(self, coords):
-        particlesAtCell = self.board.getEntitiesOfClass(coords, Particle)
-        for particle in particlesAtCell:
-            if particle.sourceClass == self.sourceClass and particle is not self:
-                self.count += particle.count
-                particle.die()
+    
 
 class Seed(Organism):
     def __init__(self, board, daysToSprout=6):
