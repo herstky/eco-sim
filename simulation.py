@@ -1,4 +1,5 @@
 from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing import Process
 from random import randint
 import sys
 
@@ -49,8 +50,11 @@ class Cell:
         for entity in entities:
             self.function(entity)
 
+    def simulateParticles(self):
+        for particle in self.particles:
+            particle.simulate()
+
     def consolidateParticles(self):
-        pass
         while len(self.incomingParticles) > 0:
             incomingParticle = self.incomingParticles.pop()
             particleAdded = False
@@ -248,6 +252,7 @@ class Board:
             for col in self.cols:
                 function(self.board[row][col])
 
+    # TODO technical debt mounting
     def consolidateParticles(self):
         for row in range(self.rows):
             for col in range(self.cols):
@@ -278,7 +283,20 @@ class Simulation:
         self.window.moveEntity(entity)
         entity.getStatus()
 
+    def test(self, cell):
+        cell.simulateParticles()
 
+    def simulateParticles(self, entities):
+        for entity in entities:
+            entiy.emanateScent()
+        for row in range(self.board.rows):
+            for col in range(self.board.cols):
+                for particle in self.board[row][col].particles:
+                    particle.simulate()
+        self.board.consolidateParticles()
+
+    def simParticle(self, entity):
+        entity.emanateScent()
 
     @functionTimer
     def tick1(self):
@@ -315,9 +333,53 @@ class Simulation:
         print('entities:', len(self.board.entities))
         self.iteration += 1
             
+    @functionTimer
+    def tick3(self):
+        self.board.queueEntities()
+        for entity in self.board.entities:
+            self.run(entity)
+        # for row in range(self.board.rows):
+        #     for col in range(self.board.cols):
+        #         for particle in self.board[row][col].particles:
+        #             particle.simulate()
+
+        for row in self.board:
+            pool = ThreadPool(16)
+            result = pool.map(self.test, row)
+            pool.close()
+            pool.join()
+        
+        self.board.consolidateParticles()
+        self.board.sortEntities()
+        self.board.raiseLabels()
+        print('entities:', len(self.board.entities))
+        self.iteration += 1
+
 
     @functionTimer
     def tick(self):
+        self.board.queueEntities()
+        entitiesSnapshot = self.board.entities[:]
+        processes = []
+        for entity in entitiesSnapshot:
+            process = Process(target=self.simParticle, args = (entity,))
+            processes.append(process)
+            process.start()
+        for process in processes:
+            process.join()
+
+        for entity in self.board.entities:
+            self.run(entity)
+        self.board.sortEntities()
+        self.board.raiseLabels()
+
+
+        print('entities:', len(self.board.entities))
+        self.iteration += 1
+
+
+    @functionTimer
+    def tick5(self):
         self.board.queueEntities()
         for entity in self.board.entities:
             self.run(entity)

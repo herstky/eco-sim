@@ -196,9 +196,12 @@ class Animal(Organism):
         self.body.baselineEnergyExpenditure()
         self.move()
         self.body.metabolize()
+        
+        self.age += 1
+
+    def emanateScent(self):
         scent = Particle(self.board, self.__class__, (self.row, self.col), 75)
         scent.addToBoard((self.row, self.col))
-        self.age += 1
 
     def move(self):
         possibleMoves = ['N', 'E', 'S', 'W']
