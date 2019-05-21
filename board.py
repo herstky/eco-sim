@@ -79,7 +79,8 @@ class Board:
         self.cols = cols
         self.entities = []
         self.board = [[Cell(self) for col in range(self.cols)] for row in range(self.rows)]
-        self.populateBoard()
+        self.populateBoard() # TODO uncomment
+        # self.addEntity(Herbivore((1, 1)), (1, 1)) # TODO remove
 
     def __getitem__(self, row):
         return self.board[row]
@@ -93,12 +94,13 @@ class Board:
         Adds entity to list corresponding to the class of entity and inserts it into the cell
         at coords. Cell order is based on entity.displayPriority
         '''
-        entity.row, entity.col = coords
+        entity.coords = coords
+        row, col = coords
         if entity not in self.entities:
             self.entities.append(entity)
             self.window.addEntity(entity)
         i = 0
-        cellEntities = self.board[entity.row][entity.col].entities
+        cellEntities = self.board[row][col].entities
         if len(cellEntities) == 0:
             cellEntities.insert(0, entity)
         else:
@@ -110,10 +112,8 @@ class Board:
         '''
         Removes entity from board, but leaves it in the entities list.
         '''
-        row = entity.row
-        col = entity.col
-        entity.row = None
-        entity.col = None
+        row, col = entity.coords
+        entity.coords = None
         self.board[row][col].entities.remove(entity)
 
     def deleteEntity(self, entity):
@@ -129,8 +129,7 @@ class Board:
         '''
         Completely destroys target and replaces it with replacement.
         '''
-        row = target.row
-        col = target.col
+        row, col = target.coords
         self.addEntity(replacement, (row, col))
         self.deleteEntity(target)
 
@@ -195,10 +194,10 @@ class Board:
         and removes entity from previous location.
         '''
         row, col = coords
-        if entity.row is not None and entity.col is not None:
+        entityRow, entityCol = entity.coords
+        if entityRow is not None and entityCol is not None:
             self.removeEntityFromBoard(entity)
-        entity.row = row
-        entity.col = col
+        entity.coords = (row, col)
         self.addEntity(entity, coords)
 
     def validPosition(self, coords):
@@ -216,7 +215,8 @@ class Board:
         Raises labels so that labels with the highest priorities appear on top.
         '''
         for entity in self.entities:
-            cellEntities = self.board[entity.row][entity.col].entities
+            row, col = entity.coords
+            cellEntities = self.board[row][col].entities
             for i in reversed(range(len(cellEntities))):
                 if cellEntities[i].label:
                     cellEntities[i].label.raise_()
@@ -231,12 +231,13 @@ class Board:
         for row in range(self.rows):
             for col in range(self.cols):
                 roll = randint(1, 100)
+                coords = (row, col)
                 if roll <= plantChance:
-                    self.addEntity(Plant(self, randint(10, 35)), (row, col))
+                    self.addEntity(Plant(coords, randint(10, 35)), coords)
                 if roll <= herbivoreChance:
-                    self.addEntity(Herbivore(self), (row, col))
+                    self.addEntity(Herbivore(coords), coords)
                 elif roll <= herbivoreChance + carnivoreChance:
-                    self.addEntity(Carnivore(self), (row, col))
+                    self.addEntity(Carnivore(coords), coords)
 
     def mapToBoard(self, function):
         '''

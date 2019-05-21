@@ -80,7 +80,7 @@ class Entity:
         Checks if adjacent cell in the given direction is a valid position on the board.
         '''
         row, col = self.getCoordsAtDirection(direction)
-        if not self.validPosition((row, col)):
+        if not board.validPosition((row, col)):
             return False
         else:
             return True
@@ -231,6 +231,7 @@ class Animal(Organism):
         self.body.baselineEnergyExpenditure()
         self.move(board)
         self.body.metabolize()
+        self.emanateScent(board)
         
         self.age += 1
 
@@ -244,8 +245,8 @@ class Animal(Organism):
         while len(possibleMoves) > 0 and not hasMoved:
             roll = randint(0, len(possibleMoves) - 1)
             direction = possibleMoves[roll]
-            if not self.containsAnimal(board, direction) and self.validCell(direction):
-                self.moveInDirection(direction)
+            if not self.containsAnimal(board, direction) and self.validCell(board, direction):
+                self.moveInDirection(board, direction)
                 self.body.actionEnergyExpenditure(1)
                 hasMoved = True
             else:
@@ -262,8 +263,8 @@ class Animal(Organism):
                 prey = board.getEntityOfClasses(coords, self.diet)
                 self.body.actionEnergyExpenditure(uniform(1, 3))
                 self.body.eat(prey)
-                prey.die()
-                self.moveInDirection(direction)
+                prey.die(board)
+                self.moveInDirection(board, direction)
                 hasEaten = True
             else:
                 possibleMoves.remove(possibleMoves[roll])
@@ -276,7 +277,7 @@ class Animal(Organism):
             while len(possibleSpaces) > 0 and not hasBred:
                 roll = randint(0, len(possibleSpaces) - 1)
                 direction = possibleSpaces[roll]
-                if not self.containsAnimal(board, direction) and self.validCell(direction):
+                if not self.containsAnimal(board, direction) and self.validCell(board, direction):
                     self.breed(board, direction)
                     self.body.actionEnergyExpenditure(uniform(2, 4))
                     hasBred = True
@@ -288,8 +289,8 @@ class Animal(Organism):
         return hasBred
     
     def breed(self, board, direction):
-        newRow, newCol = self.getCoordsAtDirection(direction)
-        board.addEntity(self.__class__(board), (newRow, newCol))
+        newCoords = self.getCoordsAtDirection(direction)
+        board.addEntity(self.__class__(newCoords), newCoords)
 
 
 class Herbivore(Animal):
@@ -352,7 +353,7 @@ class Plant(Organism):
         coords = self.getCoordsAtDirection(direction, magnitude)
         if board.validPosition(coords):
             if not board.cellContains(coords, Plant) and not board.cellContains(coords, Seed):
-                board.addEntity(Seed(board, randint(12, 20)), coords)
+                board.addEntity(Seed(coords, randint(12, 20)), coords)
     
 
 class Seed(Organism):
@@ -368,5 +369,5 @@ class Seed(Organism):
             self.sprout(board)
                 
     def sprout(self, board):
-        board.replaceEntity(self, Plant(board, 10))
+        board.replaceEntity(self, Plant(self.coords, 10))
     

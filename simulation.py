@@ -30,9 +30,9 @@ class Simulation:
     def run(self, entity):
         if entity.processed:
             return
-        entity.simulate()
+        entity.simulate(self.board)
         self.window.moveEntity(entity)
-        entity.getStatus()
+        entity.getStatus(self.board)
 
     def test(self, cell):
         cell.simulateParticles()
@@ -50,15 +50,17 @@ class Simulation:
         entity.emanateScent()
 
     @functionTimer
-    def tick1(self):
+    def tick(self):
         self.board.queueEntities()
         particles = []
         organisms = []
         for entity in self.board.entities:
             if isinstance(entity, Particle):
                 particles.append(entity)
-            else:
+            elif isinstance(entity, Organism):
                 organisms.append(entity)
+        print('particles:', len(particles))
+        print('organisms:', len(organisms))
         for organism in organisms:
             self.run(organism)
         for particle in particles:
@@ -67,7 +69,6 @@ class Simulation:
         self.board.consolidateParticles()
         self.board.sortEntities()
         self.board.raiseLabels()
-        print('entities:', len(self.board.entities))
         self.iteration += 1
 
     @functionTimer
@@ -108,7 +109,7 @@ class Simulation:
 
 
     @functionTimer
-    def tick(self):
+    def tick4(self):
         self.board.queueEntities()
         entitiesSnapshot = self.board.entities[:]
         processes = []
@@ -148,6 +149,6 @@ class Simulation:
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Window()
-    simulation = Simulation(window, 30, .5, .25)    
+    simulation = Simulation(window, 30, .5, .5)    
     window.show()
     sys.exit(app.exec_())

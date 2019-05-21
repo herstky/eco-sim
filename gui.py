@@ -35,18 +35,20 @@ class Window(QMainWindow):
     def addEntity(self, entity):
         if not entity.texture:
             return
+        row, col = entity.coords
         pixmap = QPixmap(entity.texture)
         entity.label = QLabel(self)
         entity.label.setPixmap(pixmap)
-        left = entity.col * self.tileSize + self.leftMargin
-        top = entity.row * self.tileSize + self.topMargin
+        left = col * self.tileSize + self.leftMargin
+        top = row * self.tileSize + self.topMargin
         entity.label.setGeometry(left, top, self.tileSize, self.tileSize)
         entity.label.show()
 
     def moveEntity(self, entity):
         if not entity.label:
             return
-        left = entity.col * self.tileSize + self.leftMargin
-        top = entity.row * self.tileSize + self.topMargin
+        row, col = entity.coords
+        left = col * self.tileSize + self.leftMargin
+        top = row * self.tileSize + self.topMargin
         entity.label.move(left, top)
 
