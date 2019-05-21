@@ -1,4 +1,5 @@
 from random import randint, uniform
+from math import ceil
 
 from constants import *
 from body import *
@@ -33,7 +34,7 @@ class Entity:
         self.processed = True # ensures entity is not simulated after dying
         board.deleteEntity(self)
 
-    def getStatus(self):
+    def getStatus(self, board):
         pass
 
     def randomizeMembers(self):
@@ -137,28 +138,30 @@ class Particle(Entity):
 
     def addToBoard(self, board, coords):
         row, col = coords
-        board[row][col].generateParticles(self, coords, self.count)
+        board[row][col].generateParticles(board, self, coords, self.count)
 
     def degrade(self, board):
         row, col = self.coords
-        board[row][col].destroyParticles(self, self.coords, 5 + ceil(self.degradationRate * self.count))
+        board[row][col].destroyParticles(board, self, self.coords, 5 + ceil(self.degradationRate * self.count))
 
     def diffuse(self, board):
         if self.count <= 0:
             return
+        row, col = self.coords
         directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
         diffusingParticles = round(self.count * self.diffusionRate)
         for direction in directions:
-            if not self.validCell(direction):
-                break
             outgoingParticles = diffusingParticles // len(directions)
-            adjCoords = self.getCoordsAtDirection(direction)
-            adjRow, adjCol = adjCoords
-            board[adjRow][adjCol].transferParticles(self, self.coords, adjCoords, outgoingParticles)
+            if self.validCell(board, direction): 
+                adjCoords = self.getCoordsAtDirection(board, direction)
+                adjRow, adjCol = adjCoords
+                board[row][col].transferParticles(board, self, self.coords, adjCoords, outgoingParticles)
+            else:
+                board[row][col].destroyParticles(board, self, self.coords, outgoingParticles)
 
-    def simulate(self):
-        self.degrade()
-        self.diffuse()
+    def simulate(self, board):
+        self.degrade(board)
+        self.diffuse(board)
 
 
 class Organism(Entity):

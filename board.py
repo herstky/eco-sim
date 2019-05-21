@@ -4,52 +4,43 @@ from entities import *
 
 
 class Cell:
-    def __init__(self, board):
-        self.board = board
+    def __init__(self):
         self.particles = []
         self.incomingParticles = []
         self.outgoingParticles = []
-        self.entities = []
+        self.organisms = []
         
-    def generateParticles(self, particle, coords, count):
+    def generateParticles(self, board, particle, coords, count):
         '''
         Creates incomingParticle object based on particle and adds it to the incomingParticles list
         of the Cell at coords.
         '''
         row, col = coords
-        incomingParticle = Particle(particle.sourceClass, coords, count)
-        self.board[row][col].incomingParticles.append(incomingParticle) 
+        incomingParticle = Particle(coords, particle.sourceClass, count)
+        board[row][col].incomingParticles.append(incomingParticle) 
 
-    def destroyParticles(self, particle, coords, count):
+    def destroyParticles(self, board, particle, coords, count):
         '''
         Creates outgoingParticle object based on particle and adds it to the outgoingParticles list
         of the Cell at coords.
         '''
         row, col = coords
-        outgoingParticle = Particle(particle.sourceClass, coords, count)
-        self.board[row][col].outgoingParticles.append(outgoingParticle)
+        outgoingParticle = Particle(coords, particle.sourceClass, count)
+        board[row][col].outgoingParticles.append(outgoingParticle)
 
-    def transferParticles(self, particle, outputCoords, inputCoords, count):
+    def transferParticles(self, board, particle, outputCoords, inputCoords, count):
         outputRow, outputCol = outputCoords
-        outgoingParticle = Particle(particle.sourceClass, outputCoords, count)
-        self.board[outputRow][outputCol].outgoingParticles.append(outgoingParticle)
+        outgoingParticle = Particle(outputCoords, particle.sourceClass, count)
+        board[outputRow][outputCol].outgoingParticles.append(outgoingParticle)
         inputRow, inputCol = inputCoords
-        incomingParticle = Particle(particle.sourceClass, inputCoords, count)
-        self.board[inputRow][inputRow].incomingParticles.append(incomingParticle)
-
-    def mapToParticles(self, function):
-        for particle in particles:
-            function(particle)
-
-    def mapToEntities(self, function):
-        for entity in entities:
-            self.function(entity)
+        incomingParticle = Particle(inputCoords, particle.sourceClass, count)
+        board[inputRow][inputRow].incomingParticles.append(incomingParticle)
 
     def simulateParticles(self):
         for particle in self.particles:
             particle.simulate()
 
-    def consolidateParticles(self):
+    def consolidateParticles(self, board):
         while len(self.incomingParticles) > 0:
             incomingParticle = self.incomingParticles.pop()
             particleAdded = False
@@ -60,6 +51,7 @@ class Cell:
                     break
             if not particleAdded:    
                 self.particles.append(incomingParticle)
+                board.entities.append(incomingParticle)
 
         while len(self.outgoingParticles) > 0:
             outgoingParticle = self.outgoingParticles.pop()
@@ -70,6 +62,7 @@ class Cell:
         for particle in self.particles:        
             if particle.count <= 0:
                 self.particles.remove(particle)
+                board.entities.remove(particle)
                
                     
 class Board:
@@ -78,7 +71,7 @@ class Board:
         self.rows = rows
         self.cols = cols
         self.entities = []
-        self.board = [[Cell(self) for col in range(self.cols)] for row in range(self.rows)]
+        self.board = [[Cell() for col in range(self.cols)] for row in range(self.rows)]
         self.populateBoard() # TODO uncomment
         # self.addEntity(Herbivore((1, 1)), (1, 1)) # TODO remove
 
@@ -100,7 +93,7 @@ class Board:
             self.entities.append(entity)
             self.window.addEntity(entity)
         i = 0
-        cellEntities = self.board[row][col].entities
+        cellEntities = self.board[row][col].organisms
         if len(cellEntities) == 0:
             cellEntities.insert(0, entity)
         else:
@@ -114,7 +107,7 @@ class Board:
         '''
         row, col = entity.coords
         entity.coords = None
-        self.board[row][col].entities.remove(entity)
+        self.board[row][col].organisms.remove(entity)
 
     def deleteEntity(self, entity):
         '''
@@ -157,7 +150,7 @@ class Board:
         '''
         row, col = coords
         entities = []
-        for entity in self.board[row][col].entities:
+        for entity in self.board[row][col].organisms:
             if isinstance(entity, classObject):
                 entities.append(entity)
         return entities
@@ -167,7 +160,7 @@ class Board:
         Iterates over list at given coords and returns first instance of any object in classes encountered.
         '''
         row, col = coords
-        for entity in self.board[row][col].entities:
+        for entity in self.board[row][col].organisms:
             for classObject in classes:
                 if isinstance(entity, classObject):
                     return entity
@@ -179,11 +172,11 @@ class Board:
         '''
         row, col = coords
         if classObject is None:
-            if len(self.board[row][col].entities) == 0:
+            if len(self.board[row][col].organisms) == 0:
                 return True
             else:
                 return False
-        for entity in self.board[row][col].entities:
+        for entity in self.board[row][col].organisms:
             if isinstance(entity, classObject):
                 return True
         return False
@@ -216,7 +209,7 @@ class Board:
         '''
         for entity in self.entities:
             row, col = entity.coords
-            cellEntities = self.board[row][col].entities
+            cellEntities = self.board[row][col].organisms
             for i in reversed(range(len(cellEntities))):
                 if cellEntities[i].label:
                     cellEntities[i].label.raise_()
@@ -247,8 +240,7 @@ class Board:
             for col in self.cols:
                 function(self.board[row][col])
 
-    # TODO technical debt mounting
-    def consolidateParticles(self):
+    def consolidateParticles(self, board):
         for row in range(self.rows):
             for col in range(self.cols):
-                self.board[row][col].consolidateParticles()
+                self.board[row][col].consolidateParticles(board)

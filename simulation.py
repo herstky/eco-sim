@@ -44,7 +44,7 @@ class Simulation:
             for col in range(self.board.cols):
                 for particle in self.board[row][col].particles:
                     particle.simulate()
-        self.board.consolidateParticles()
+        self.board.consolidateParticles(self.board)
 
     def simParticle(self, entity):
         entity.emanateScent()
@@ -66,7 +66,7 @@ class Simulation:
         for particle in particles:
             self.run(particle)
 
-        self.board.consolidateParticles()
+        self.board.consolidateParticles(self.board)
         self.board.sortEntities()
         self.board.raiseLabels()
         self.iteration += 1
@@ -79,7 +79,7 @@ class Simulation:
         pool.close()
         pool.join()
 
-        self.board.consolidateParticles()
+        self.board.consolidateParticles(self.board)
         self.board.sortEntities()
         self.board.raiseLabels()
         print('entities:', len(self.board.entities))
@@ -101,7 +101,7 @@ class Simulation:
             pool.close()
             pool.join()
         
-        self.board.consolidateParticles()
+        self.board.consolidateParticles(self.board)
         self.board.sortEntities()
         self.board.raiseLabels()
         print('entities:', len(self.board.entities))
@@ -139,7 +139,7 @@ class Simulation:
             for col in range(self.board.cols):
                 for particle in self.board[row][col].particles:
                     particle.simulate()
-        self.board.consolidateParticles()
+        self.board.consolidateParticles(self.board)
         self.board.sortEntities()
         self.board.raiseLabels()
         print('entities:', len(self.board.entities))
