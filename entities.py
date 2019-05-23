@@ -140,7 +140,7 @@ class Particle(Entity):
         row, col = coords
         board[row][col].generateParticles(board, self, coords, self.count)
 
-    def degrade(self, board):
+    def decay(self, board):
         row, col = self.coords
         board[row][col].destroyParticles(board, self, self.coords, 5 + ceil(self.degradationRate * self.count))
 
@@ -160,7 +160,7 @@ class Particle(Entity):
                 board[row][col].destroyParticles(board, self, self.coords, outgoingParticles)
 
     def simulate(self, board):
-        self.degrade(board)
+        self.decay(board)
         self.diffuse(board)
 
 

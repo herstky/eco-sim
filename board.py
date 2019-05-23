@@ -72,8 +72,8 @@ class Board:
         self.cols = cols
         self.entities = []
         self.board = [[Cell() for col in range(self.cols)] for row in range(self.rows)]
-        self.populateBoard() # TODO uncomment
-        # self.addEntity(Herbivore((1, 1)), (1, 1)) # TODO remove
+        # self.populateBoard() # TODO uncomment
+        self.addEntity(Herbivore((1, 1)), (1, 1)) # TODO remove
 
     def __getitem__(self, row):
         return self.board[row]
