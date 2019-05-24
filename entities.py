@@ -128,40 +128,79 @@ class Particle(Entity):
     Particles start at an altitude above ground level and float to adjacent cells until they hit the
     ground. Particles behave independently of other entities and can therefore be simulated in parallel. 
     '''
-    def __init__(self, coords, sourceClass, count=1000, diffusionRate=.1, degradationRate=.1):
+    def __init__(self, coords, sourceClass, count=1000, diffusionRate=.1, decayRate=.1):
         super().__init__(coords)
         self.name = 'Particle'
         self.sourceClass = sourceClass
         self.count = count
         self.diffusionRate = diffusionRate # the fraction of count that will diffuse to adjacent cells
-        self.degradationRate = degradationRate
+        self.decayRate = decayRate
 
     def addToBoard(self, board, coords):
         row, col = coords
-        board[row][col].generateParticles(board, self, coords, self.count)
+        board[row][col].particles.append(self)
+        board.entities.append(self)
+
+    def removeFromBoard(self, board, coords):
+        row, col = coords
+        board[row][col].particles.remove(self)
+        board.entities.remove(self)
+
+    @classmethod
+    def generate(cls, board, source, amount):
+        row, col = source.coords
+        cell = board[row][col]
+        for particle in cell.particles:
+            if particle.sourceClass == source.__class__:
+                particle.count += amount
+                return
+        newParticle = Particle(source.coords, source.__class__, amount)
+        cell.particles.append(newParticle)
+        board.entities.append(newParticle)
+
+    def transferOut(self, board, coords, amount):
+        if not board.validPosition(coords):
+                return
+        amount = min(amount, self.count)
+        self.count -= amount
+        row, col = coords 
+        cell = board[row][col]
+        for particle in cell.particles: 
+            if particle.sourceClass == self.sourceClass:
+                particle.count += amount
+                return
+        newParticle = Particle(coords, self.sourceClass, amount)  
+        newParticle.addToBoard(board, coords)    
 
     def decay(self, board):
+        if self.count <= 0:
+            return
         row, col = self.coords
-        board[row][col].destroyParticles(board, self, self.coords, 5 + ceil(self.degradationRate * self.count))
+        self.count -= 5 + ceil(self.decayRate * self.count)
 
     def diffuse(self, board):
         if self.count <= 0:
             return
         row, col = self.coords
+        cell = board[row][col]
         directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-        diffusingParticles = round(self.count * self.diffusionRate)
+        diffusingParticlesPerDirection = self.count * self.diffusionRate // len(directions) 
+        self.count -= diffusingParticlesPerDirection * len(directions) 
         for direction in directions:
-            outgoingParticles = diffusingParticles // len(directions)
-            if self.validCell(board, direction): 
-                adjCoords = self.getCoordsAtDirection(board, direction)
-                adjRow, adjCol = adjCoords
-                board[row][col].transferParticles(board, self, self.coords, adjCoords, outgoingParticles)
-            else:
-                board[row][col].destroyParticles(board, self, self.coords, outgoingParticles)
+            adjCoords = self.getCoordsAtDirection(board, direction)
+            self.transferOut(board, adjCoords, diffusingParticlesPerDirection)                            
+    
+    def die(self, board):
+        row, col = self.coords
+        self.removeFromBoard(board, self.coords)
 
     def simulate(self, board):
         self.decay(board)
         self.diffuse(board)
+
+    def getStatus(self, board):
+        if self.count <= 0:
+            self.die(board)
 
 
 class Organism(Entity):
@@ -239,8 +278,7 @@ class Animal(Organism):
         self.age += 1
 
     def emanateScent(self, board):
-        scent = Particle(self.coords, self.__class__, 75)
-        scent.addToBoard(board, self.coords)
+        Particle.generate(board, self, 75)
 
     def move(self, board):
         possibleMoves = ['N', 'E', 'S', 'W']

@@ -10,12 +10,10 @@ from gui import *
 
 
 class Simulation:
-    def __init__(self, window, iterations=10, waitBetweenRounds=.5):
+    def __init__(self, window, waitBetweenRounds=.5):
         self.board = Board(window)
         self.iteration = 0
         self.window = window
-        self.iterations = iterations
-        self.waitBetweenEntities = waitBetweenEntities
         self.waitBetweenRounds = waitBetweenRounds
 
         self.window.simulation = self
@@ -66,89 +64,14 @@ class Simulation:
         for particle in particles:
             self.run(particle)
 
-        self.board.consolidateParticles(self.board)
         self.board.sortEntities()
         self.board.raiseLabels()
-        self.iteration += 1
-
-    @functionTimer
-    def tick2(self):
-        self.board.queueEntities()        
-        pool = ThreadPool(8)
-        results = pool.map(self.run, self.board.entities)
-        pool.close()
-        pool.join()
-
-        self.board.consolidateParticles(self.board)
-        self.board.sortEntities()
-        self.board.raiseLabels()
-        print('entities:', len(self.board.entities))
-        self.iteration += 1
-            
-    @functionTimer
-    def tick3(self):
-        self.board.queueEntities()
-        for entity in self.board.entities:
-            self.run(entity)
-        # for row in range(self.board.rows):
-        #     for col in range(self.board.cols):
-        #         for particle in self.board[row][col].particles:
-        #             particle.simulate()
-
-        for row in self.board:
-            pool = ThreadPool(16)
-            result = pool.map(self.test, row)
-            pool.close()
-            pool.join()
-        
-        self.board.consolidateParticles(self.board)
-        self.board.sortEntities()
-        self.board.raiseLabels()
-        print('entities:', len(self.board.entities))
-        self.iteration += 1
-
-
-    @functionTimer
-    def tick4(self):
-        self.board.queueEntities()
-        entitiesSnapshot = self.board.entities[:]
-        processes = []
-        for entity in entitiesSnapshot:
-            process = Process(target=self.simParticle, args = (entity,))
-            processes.append(process)
-            process.start()
-        for process in processes:
-            process.join()
-
-        for entity in self.board.entities:
-            self.run(entity)
-        self.board.sortEntities()
-        self.board.raiseLabels()
-
-
-        print('entities:', len(self.board.entities))
-        self.iteration += 1
-
-
-    @functionTimer
-    def tick5(self):
-        self.board.queueEntities()
-        for entity in self.board.entities:
-            self.run(entity)
-        for row in range(self.board.rows):
-            for col in range(self.board.cols):
-                for particle in self.board[row][col].particles:
-                    particle.simulate()
-        self.board.consolidateParticles(self.board)
-        self.board.sortEntities()
-        self.board.raiseLabels()
-        print('entities:', len(self.board.entities))
         self.iteration += 1
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Window()
-    simulation = Simulation(window, 30, .25)    
+    simulation = Simulation(window, .1)    
     window.show()
     sys.exit(app.exec_())
