@@ -10,7 +10,7 @@ from gui import *
 
 
 class Simulation:
-    def __init__(self, window, iterations=10, waitBetweenEntities=0.25, waitBetweenRounds=0):
+    def __init__(self, window, iterations=10, waitBetweenRounds=.5):
         self.board = Board(window)
         self.iteration = 0
         self.window = window
@@ -149,6 +149,6 @@ class Simulation:
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Window()
-    simulation = Simulation(window, 30, .5, .5)    
+    simulation = Simulation(window, 30, .25)    
     window.show()
     sys.exit(app.exec_())
