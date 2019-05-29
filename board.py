@@ -10,9 +10,7 @@ class Cell:
         self.outgoingParticles = []
         self.organisms = []
         
-    
-               
-                    
+                     
 class Board:
     def __init__(self, window, rows=20, cols=30):
         self.window = window
@@ -140,6 +138,35 @@ class Board:
             self.removeEntityFromBoard(entity)
         entity.coords = (row, col)
         self.addEntity(entity, coords)
+
+    def getCoordsAtDirection(self, initialCoords, direction, magnitude=1):
+        '''
+        Returns a tuple containing the new coords, with the row as the first element
+        and the col as the second. Returned coords must be checked for validity by 
+        calling function
+        '''
+        row, col = initialCoords
+        if direction == 'N':
+            row -= magnitude
+        elif direction == 'NE':
+            row -= magnitude
+            col += magnitude
+        elif direction == 'E':
+            col += magnitude
+        elif direction == 'SE':
+            row += magnitude
+            col += magnitude
+        elif direction == 'S':
+            row += magnitude
+        elif direction == 'SW':
+            row += magnitude
+            col -= magnitude
+        elif direction == 'W':
+            col -= magnitude
+        elif direction == 'NW':
+            row -= magnitude
+            col -= magnitude
+        return (row, col)
 
     def validPosition(self, coords):
         '''

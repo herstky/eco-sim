@@ -1,5 +1,4 @@
 from random import randint, uniform
-from math import ceil
 
 from constants import *
 from body import *
@@ -176,7 +175,7 @@ class Particle(Entity):
         if self.count <= 0:
             return
         row, col = self.coords
-        self.count -= 5 + ceil(self.decayRate * self.count)
+        self.count -= 5 + int(self.decayRate * self.count)
 
     def diffuse(self, board):
         if self.count <= 0:
@@ -184,7 +183,7 @@ class Particle(Entity):
         row, col = self.coords
         cell = board[row][col]
         directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-        diffusingParticlesPerDirection = self.count * self.diffusionRate // len(directions) 
+        diffusingParticlesPerDirection = int(self.count * self.diffusionRate / len(directions)) 
         self.count -= diffusingParticlesPerDirection * len(directions) 
         for direction in directions:
             adjCoords = self.getCoordsAtDirection(board, direction)
@@ -241,6 +240,7 @@ class Animal(Organism):
         self.displayPriority = 1
         self.diet = []
         self.body = AnimalBody(mass, massCapacity)
+        self.nose = Nose()
         self.strength = 0
         self.strengthBaseline = 0
         self.stepsToBreed = 6
@@ -273,8 +273,7 @@ class Animal(Organism):
         self.body.baselineEnergyExpenditure()
         self.move(board)
         self.body.metabolize()
-        self.emanateScent(board)
-        
+        self.emanateScent(board)        
         self.age += 1
 
     def emanateScent(self, board):
@@ -365,6 +364,11 @@ class Carnivore(Animal):
         if not hasEaten:
             super().move(board)
         self.attemptToBreed(board)
+
+    def simulate(self, board):
+        super().simulate(board)
+        self.nose.smell(self, board, Herbivore)
+
 
 
 class Omnivore(Animal):

@@ -32,21 +32,6 @@ class Simulation:
         self.window.moveEntity(entity)
         entity.getStatus(self.board)
 
-    def test(self, cell):
-        cell.simulateParticles()
-
-    def simulateParticles(self, entities):
-        for entity in entities:
-            entiy.emanateScent()
-        for row in range(self.board.rows):
-            for col in range(self.board.cols):
-                for particle in self.board[row][col].particles:
-                    particle.simulate()
-        self.board.consolidateParticles(self.board)
-
-    def simParticle(self, entity):
-        entity.emanateScent()
-
     @functionTimer
     def tick(self):
         self.board.queueEntities()
@@ -72,6 +57,6 @@ class Simulation:
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Window()
-    simulation = Simulation(window, .1)    
+    simulation = Simulation(window, .25)    
     window.show()
     sys.exit(app.exec_())

@@ -1,6 +1,32 @@
 from constants import *
 
 
+class Nose:
+    def __init__(self, particleThreshold=25):
+        self.particleThreshold = particleThreshold
+
+    def smell(self, animal, board, targetClass): 
+        row, col = animal.coords
+        size = 3
+        scentMatrix = [[0 for i in range(size)] for j in range(size)]
+        for y in range(size):
+            for x in range(size):
+                if board.validPosition((row + y - 1, col + x - 1)):
+                    for particle in board[row + y - 1][col + x - 1].particles:
+                        if particle.sourceClass == targetClass and particle.count >= self.particleThreshold:
+                            scentMatrix[y][x] = particle.count 
+                            break    
+        print(scentMatrix)
+        return scentMatrix            
+
+            
+        
+
+class Brain:
+    def __init__(self):
+        pass
+
+
 class Stomach:
     def __init__(self, body, capacityRatio=.2, digestionRate=.1):
         self.body = body
