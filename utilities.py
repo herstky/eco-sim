@@ -12,11 +12,10 @@ def functionTimer(func):
         return result
     return wrapper
 
-def sigmoid(x):
+def sigmoid(z):
     '''
     Applies sigmoid function to input matrix elementwise.
     '''
-    z = x
     for row in range(len(z)):
         for col in range(len(z[0])):
             z[row][col] =  1 / (1 + math.exp(-z[row][col]))

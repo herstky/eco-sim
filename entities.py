@@ -332,7 +332,9 @@ class Animal(Organism):
     
     def breed(self, board, direction):
         newCoords = self.getCoordsAtDirection(direction)
-        board.addEntity(self.__class__(newCoords, self.generation + 1), newCoords)
+        newAnimal = self.__class__(newCoords, self.generation + 1)
+        newAnimal.brain = self.brain
+        board.addEntity(newAnimal, newCoords)
 
 
 class Herbivore(Animal):

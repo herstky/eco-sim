@@ -1,5 +1,6 @@
 from constants import *
 from neuralNetwork import NeuralNetwork
+from random import uniform, randint
 
 class Nose:
     def __init__(self, particleThreshold=25):
@@ -27,6 +28,16 @@ class Brain:
 
     def decide(self, inputs):
         self.neuralNetwork.forwardPropagate(inputs)
+
+    def mutate(self):
+        for row in range(len(self.neuralNetwork.theta1)):
+            for col in range(len(self.neuralNetwork.theta1[0])):
+                if randint(1, 100) <= 10:
+                    self.neuralNetwork.theta1[row][col] = uniform(-1, 1)
+                variance = self.neuralNetwork.theta1[row][col] * .05
+                self.neuralNetwork.theta1[row][col] += uniform(-variance, variance)
+
+
        
 
 

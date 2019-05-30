@@ -9,7 +9,7 @@ class NeuralNetwork:
     def forwardPropagate(self, X):
         print(X)
         X = np.array(X)
-        X = np.reshape(X, (1, 9))
+        X = np.reshape(X, (1, X.size))
         X0 = np.array([[1]])
         X = np.hstack([X0, X])
         a1 = X
