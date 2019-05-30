@@ -19,7 +19,11 @@ class Board:
         self.entities = []
         self.board = [[Cell() for col in range(self.cols)] for row in range(self.rows)]
         self.populateBoard() # TODO uncomment
-        # self.addEntity(Herbivore((1, 1)), (1, 1)) # TODO remove
+        # self.addEntity(Carnivore((1, 1)), (1, 1)) # TODO remove
+        # self.addEntity(Herbivore((3, 1)), (3, 1)) # TODO remove
+        # self.addEntity(Herbivore((1, 2)), (1, 2)) # TODO remove
+        # self.addEntity(Herbivore((2, 2)), (2, 2)) # TODO remove
+        # self.addEntity(Herbivore((10, 10)), (10, 10)) # TODO remove
 
     def __getitem__(self, row):
         return self.board[row]

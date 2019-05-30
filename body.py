@@ -1,5 +1,3 @@
-import numpy as np
-
 from constants import *
 from neuralNetwork import NeuralNetwork
 
@@ -18,7 +16,6 @@ class Nose:
                         if particle.sourceClass == targetClass and particle.count >= self.particleThreshold:
                             scentMatrix[y][x] = particle.count 
                             break    
-        print(scentMatrix)
         return scentMatrix            
 
             
@@ -26,7 +23,10 @@ class Nose:
 
 class Brain:
     def __init__(self, neuralNetwork=NeuralNetwork()):
-        neuralNetwork = neuralNetwork
+        self.neuralNetwork = neuralNetwork
+
+    def decide(self, inputs):
+        self.neuralNetwork.forwardPropagate(inputs)
        
 
 

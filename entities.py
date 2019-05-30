@@ -1,6 +1,7 @@
 from random import randint, uniform
 
 from constants import *
+from neuralNetwork import NeuralNetwork
 from body import *
 
 # TODO clean up checking for valid entities and indexes
@@ -37,6 +38,9 @@ class Entity:
         pass
 
     def randomizeMembers(self):
+        pass
+
+    def simulate(self, board):
         pass
 
     def getCoordsAtDirection(self, direction, magnitude=1):
@@ -225,9 +229,6 @@ class Organism(Entity):
     def randomizeMembers(self):
         self.age = randint(0, 10)
 
-    def simulate(self, board):
-        pass
-
     def getStatus(self, board):
         if self.health <= 0:
             return self.die(board)
@@ -368,7 +369,8 @@ class Carnivore(Animal):
 
     def simulate(self, board):
         super().simulate(board)
-        self.nose.smell(self, board, Herbivore)
+        scents = self.nose.smell(self, board, Herbivore)
+        self.brain.decide(scents)
 
   
 
