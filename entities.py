@@ -203,12 +203,12 @@ class Particle(Entity):
 
 
 class Organism(Entity):
-    def __init__(self, coords, randomize=False):
+    def __init__(self, coords, generation=0, randomize=False):
         super().__init__(coords)
         self.name = 'Organism'
+        self.generation = generation
         self.displayPriority = 5
         self.age = 0 # time steps
-        self.generation = 0
         self.maturityAge = 0
         self.health = 0
         self.healthBaseline = 0
@@ -234,13 +234,14 @@ class Organism(Entity):
      
 
 class Animal(Organism):
-    def __init__(self, coords, mass=50, massCapacity=100, randomize=False):
-        super().__init__(coords, randomize)
+    def __init__(self, coords, generation=0, mass=50, massCapacity=100, randomize=False):
+        super().__init__(coords, generation, randomize)
         self.name = 'Animal'
         self.displayPriority = 1
         self.diet = []
         self.body = AnimalBody(mass, massCapacity)
         self.nose = Nose()
+        self.brain = Brain()
         self.strength = 0
         self.strengthBaseline = 0
         self.stepsToBreed = 6
@@ -330,12 +331,12 @@ class Animal(Organism):
     
     def breed(self, board, direction):
         newCoords = self.getCoordsAtDirection(direction)
-        board.addEntity(self.__class__(newCoords), newCoords)
+        board.addEntity(self.__class__(newCoords, self.generation + 1), newCoords)
 
 
 class Herbivore(Animal):
-    def __init__(self, coords, mass=20, massCapacity=60, randomize=False):
-        super().__init__(coords, mass, massCapacity, randomize)
+    def __init__(self, coords, generation=0, mass=20, massCapacity=60, randomize=False):
+        super().__init__(coords, generation, mass, massCapacity, randomize)
         self.name ='Herbivore'
         self.texture = 'assets/blueCircle.png'
         self.diet.append(Plant)
@@ -349,8 +350,8 @@ class Herbivore(Animal):
 
 
 class Carnivore(Animal):
-    def __init__(self, coords, mass=50, massCapacity=200, randomize=False):
-        super().__init__(coords, mass, massCapacity, randomize)
+    def __init__(self, coords, generation=0, mass=50, massCapacity=200, randomize=False):
+        super().__init__(coords, generation, mass, massCapacity, randomize)
         self.name = 'Carnivore'
         self.texture = 'assets/orangeCircle.png'
         self.diet.append(Herbivore)
@@ -369,18 +370,11 @@ class Carnivore(Animal):
         super().simulate(board)
         self.nose.smell(self, board, Herbivore)
 
-
-
-class Omnivore(Animal):
-    def __init__(self):
-        super().__init__()
-        self.name = 'Omnivore'
-        self.diet.extend((Plant, Animal))
   
 
 class Plant(Organism):
-    def __init__(self, coords, mass=1, massCapacity=35, germinationChance=30):
-        super().__init__(coords)
+    def __init__(self, coords, generation=0, mass=1, massCapacity=35, germinationChance=30):
+        super().__init__(coords, generation)
         self.name = 'Plant'
         self.displayPriority = 5
         self.texture = 'assets/plant.png'
@@ -398,12 +392,12 @@ class Plant(Organism):
         coords = self.getCoordsAtDirection(direction, magnitude)
         if board.validPosition(coords):
             if not board.cellContains(coords, Plant) and not board.cellContains(coords, Seed):
-                board.addEntity(Seed(coords, randint(12, 20)), coords)
+                board.addEntity(Seed(coords, self.generation + 1, randint(12, 20)), coords)
     
 
 class Seed(Organism):
-    def __init__(self, coords, daysToSprout=6):
-        super().__init__(coords)
+    def __init__(self, coords, generation=0, daysToSprout=6):
+        super().__init__(coords, generation)
         self.name = 'Seed'
         self.daysToSprout = daysToSprout
 
@@ -414,5 +408,5 @@ class Seed(Organism):
             self.sprout(board)
                 
     def sprout(self, board):
-        board.replaceEntity(self, Plant(self.coords, 10))
+        board.replaceEntity(self, Plant(self.coords, self.generation, 10))
     

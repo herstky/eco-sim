@@ -1,5 +1,7 @@
-from constants import *
+import numpy as np
 
+from constants import *
+from neuralNetwork import NeuralNetwork
 
 class Nose:
     def __init__(self, particleThreshold=25):
@@ -23,8 +25,9 @@ class Nose:
         
 
 class Brain:
-    def __init__(self):
-        pass
+    def __init__(self, neuralNetwork=NeuralNetwork()):
+        neuralNetwork = neuralNetwork
+       
 
 
 class Stomach:
