@@ -146,8 +146,7 @@ class Board:
     def getCoordsAtDirection(self, initialCoords, direction, magnitude=1):
         '''
         Returns a tuple containing the new coords, with the row as the first element
-        and the col as the second. Returned coords must be checked for validity by 
-        calling function
+        and the col as the second. Returned coords should be checked for validity. 
         '''
         row, col = initialCoords
         if direction == 'N':

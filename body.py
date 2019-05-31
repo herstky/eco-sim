@@ -2,6 +2,7 @@ from constants import *
 from neuralNetwork import NeuralNetwork
 from random import uniform, randint
 
+
 class Nose:
     def __init__(self, particleThreshold=25):
         self.particleThreshold = particleThreshold
@@ -17,28 +18,30 @@ class Nose:
                         if particle.sourceClass == targetClass and particle.count >= self.particleThreshold:
                             scentMatrix[y][x] = particle.count 
                             break    
+        maxVal = max(map(max, scentMatrix))
+        if maxVal > 0:
+            # normalize
+            for row in range(len(scentMatrix)):
+                for col in range(len(scentMatrix[0])):
+                    scentMatrix[row][col] = scentMatrix[row][col] / maxVal
         return scentMatrix            
-
-            
-        
+      
 
 class Brain:
-    def __init__(self, neuralNetwork=NeuralNetwork()):
-        self.neuralNetwork = neuralNetwork
+    def __init__(self):
+        self.neuralNetwork = NeuralNetwork()
 
     def decide(self, inputs):
-        self.neuralNetwork.forwardPropagate(inputs)
+        return self.neuralNetwork.forwardPropagate(inputs)
 
     def mutate(self):
-        for row in range(len(self.neuralNetwork.theta1)):
-            for col in range(len(self.neuralNetwork.theta1[0])):
-                if randint(1, 100) <= 10:
-                    self.neuralNetwork.theta1[row][col] = uniform(-1, 1)
-                variance = self.neuralNetwork.theta1[row][col] * .05
-                self.neuralNetwork.theta1[row][col] += uniform(-variance, variance)
-
-
-       
+        for theta in self.neuralNetwork.weights:
+            for row in range(len(theta)):
+                for col in range(len(theta[0])):
+                    if randint(1, 100) <= 30:
+                        theta[row][col] = uniform(-1, 1)
+                    variance = theta[row][col] * .05
+                    theta[row][col] += uniform(-variance / 2, variance / 2)
 
 
 class Stomach:
@@ -124,7 +127,6 @@ class AnimalBody(Body):
         muscleProportion = self.muscleMassFraction / self.edibleMassFraction
         return fatProportion * BODY_FAT_ENERGY_CONTENT + muscleProportion * BODY_MUSCLE_ENERGY_CONTENT
 
-
     def hungry(self):
         return self.stomach.contentsMass / self.stomach.capacity < self.satiationThreshold
 
@@ -155,12 +157,12 @@ class AnimalBody(Body):
             self.muscleMassFraction = (startingMuscleMass + muscleMassGained) / self.mass
 
     def canReproduce(self):
-        return self.fatMassFraction >= .12
+        return self.fatMassFraction >= .16
 
     # Resets the total energy expenditure to the baseline. This method should be called before 
     # any other energy expenditure calculations are done
     def baselineEnergyExpenditure(self):
-        self.totalEnergyExpenditure = 4000 + 100 * self.mass
+        self.totalEnergyExpenditure = 5000 + 100 * self.mass
 
     # magnitude should be approximately 1 for moving a single space, 2-3 for chasing prey, etc
     def actionEnergyExpenditure(self, magnitude):
