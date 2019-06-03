@@ -49,11 +49,11 @@ class Simulation:
         for particle in particles:
             self.run(particle)
 
-        if self.board.carnivores <= 0:
+        if self.board.herbivores <= 0:
             for entity in self.board.entities:
                 if entity.label:
                     entity.label.deleteLater()
-            self.board = Board(self.window, self.board.carnivoreTemplate)
+            self.board = Board(self.window, self.board.creatureTemplate)
             self.simCount += 1
 
         self.board.sortEntities()

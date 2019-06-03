@@ -43,6 +43,17 @@ class Brain:
                     variance = theta[row][col] * .30
                     theta[row][col] += uniform(-variance / 2, variance / 2)
 
+    def inheritance(self, other):
+        maxLayerDepth = max(len(self.neuralNetwork.weights), len(other.neuralNetworks.weights))
+        for i in range(maxLayerDepth):
+            if i >= len(self.neuralNetwork.weights):
+                numNodes = len(other.neuralNetwork.weights[i])
+            else:
+                numNodes = len(self.neuralNetwork.weights[i])
+            for j in range(numNodes):
+
+
+
 
 class Stomach:
     def __init__(self, body, capacityRatio=.2, digestionRate=.05):
