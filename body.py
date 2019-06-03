@@ -44,13 +44,19 @@ class Brain:
                     theta[row][col] += uniform(-variance / 2, variance / 2)
 
     def inheritance(self, other):
+        newWeights = []
         maxLayerDepth = max(len(self.neuralNetwork.weights), len(other.neuralNetworks.weights))
         for i in range(maxLayerDepth):
+            newWeights.append([])
             if i >= len(self.neuralNetwork.weights):
                 numNodes = len(other.neuralNetwork.weights[i])
             else:
                 numNodes = len(self.neuralNetwork.weights[i])
             for j in range(numNodes):
+                if j < len(self.neuralNetwork.weights[i]) and j < len(other.neuralNetwork.weights[i]):
+                    node1 = self.neuralNetwork.weights[i][j]
+                    node2 = other.neuralNetwork.weights[i][j]
+                    newWeights[i].append((node1 + node2) / 2)
 
 
 
