@@ -13,7 +13,7 @@ class Nose:
         scentMatrix = [[0 for i in range(size)] for j in range(size)]
         for y in range(size):
             for x in range(size):
-                if board.validPosition((row + y - 1, col + x - 1)):
+                if board.validPosition((row + y - 1, col + x - 1)) and not board.cellContains(animal.coords, animal.__class__):
                     for particle in board[row + y - 1][col + x - 1].particles:
                         if particle.sourceClass == targetClass and particle.count >= self.particleThreshold:
                             scentMatrix[y][x] = particle.count 
@@ -38,14 +38,14 @@ class Brain:
         for theta in self.neuralNetwork.weights:
             for row in range(len(theta)):
                 for col in range(len(theta[0])):
-                    if randint(1, 100) <= 30:
+                    if randint(1, 100) <= 10:
                         theta[row][col] = uniform(-1, 1)
-                    variance = theta[row][col] * .05
+                    variance = theta[row][col] * .30
                     theta[row][col] += uniform(-variance / 2, variance / 2)
 
 
 class Stomach:
-    def __init__(self, body, capacityRatio=.2, digestionRate=.1):
+    def __init__(self, body, capacityRatio=.2, digestionRate=.05):
         self.body = body
         self.contents = []
         self.capacityRatio = capacityRatio
@@ -104,18 +104,17 @@ class Body:
 
     
 class AnimalBody(Body):
-    def __init__(self, mass=50, massCapacity=300):
+    def __init__(self, mass=50, massCapacity=70):
         super().__init__(mass, massCapacity)
         self.fatMassFraction = .20
         self.muscleMassFraction = .35
         self.fatStorageFraction = self.fatMassFraction / (self.fatMassFraction + self.muscleMassFraction)
         self.muscleStorageFraction = 1 - self.fatStorageFraction
         self.totalEnergyExpenditure = 0 # keeps track of the total amount of energy spent during current tick
-        self.satiationThreshold = .8
+        self.satiationThreshold = .6
         self.starvationThreshold = .05 # fatMassFraction dropping below this threshold causes death
         self.satiationAmount = 10
         self.stomach = Stomach(self)
-        self.digestionRate = .1
 
     @property
     def edibleMassFraction(self):
@@ -162,7 +161,7 @@ class AnimalBody(Body):
     # Resets the total energy expenditure to the baseline. This method should be called before 
     # any other energy expenditure calculations are done
     def baselineEnergyExpenditure(self):
-        self.totalEnergyExpenditure = 5000 + 100 * self.mass
+        self.totalEnergyExpenditure = 4000 + 100 * self.mass
 
     # magnitude should be approximately 1 for moving a single space, 2-3 for chasing prey, etc
     def actionEnergyExpenditure(self, magnitude):

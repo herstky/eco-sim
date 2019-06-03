@@ -1,4 +1,5 @@
 from random import randint, uniform
+from copy import deepcopy
 
 from constants import *
 from neuralNetwork import NeuralNetwork
@@ -295,12 +296,12 @@ class Animal(Organism):
                 possibleMoves.remove(direction)
 
     def attemptToEat(self, board):
-        possibleMoves = ['N', 'E', 'S', 'W']
+        directions = ['N', 'E', 'S', 'W']
         hasEaten = False
-        while len(possibleMoves) > 0 and not hasEaten:
-            roll = randint(0, len(possibleMoves) - 1)
-            direction = possibleMoves[roll]
-            if self.checkForValidEntityFromList(board, direction, self.diet):
+        while len(directions) > 0 and not hasEaten:
+            roll = randint(0, len(directions) - 1)
+            direction = directions[roll]
+            if self.checkForValidEntityFromList(board, direction, self.diet) and not self.containsAnimal(board, direction):
                 coords = self.getCoordsAtDirection(direction)
                 prey = board.getEntityOfClasses(coords, self.diet)
                 self.body.actionEnergyExpenditure(uniform(1, 3))
@@ -309,7 +310,7 @@ class Animal(Organism):
                 self.moveInDirection(board, direction)
                 hasEaten = True
             else:
-                possibleMoves.remove(possibleMoves[roll])
+                directions.remove(directions[roll])
         return hasEaten
 
     def attemptToBreed(self, board):
@@ -333,7 +334,7 @@ class Animal(Organism):
     def breed(self, board, direction):
         newCoords = self.getCoordsAtDirection(direction)
         newAnimal = self.__class__(newCoords, self.generation + 1)
-        newAnimal.brain = self.brain
+        newAnimal.brain = deepcopy(self.brain)
         newAnimal.brain.mutate()
         board.addEntity(newAnimal, newCoords)
 
@@ -344,12 +345,12 @@ class Herbivore(Animal):
         self.name ='Herbivore'
         self.texture = 'assets/blueCircle.png'
         self.diet.append(Plant)
-        self.maturityAge = 10
-        self.stepsToBreed = randint(10, 16)
+        self.maturityAge = 15
+        self.stepsToBreed = randint(12, 20)
 
     def move(self, board):
         if not self.attemptToEat(board):
-            if randint(1, 100) < 30:
+            if randint(1, 100) <= 10:
                 super().move(board)
         self.attemptToBreed(board)
 
@@ -364,21 +365,39 @@ class Carnivore(Animal):
         self.stepsToBreed = randint(10, 15)
 
     def move(self, board):
-        hasEaten = False
+        scents = self.nose.smell(self, board, Herbivore)
+        decision, value = max(enumerate(self.brain.decide(scents)), key=lambda p: p[1])
+        if not decision == 4:
+            self.body.actionEnergyExpenditure(uniform(.25, .4))  # caloric penalty for searcing for a valid move if not necessary
+            directions = ['N', 'E', 'S', 'W']
+            direction = directions[decision]
+            coords = board.getCoordsAtDirection(self.coords, direction)
+            if board.validPosition(coords) and not board.cellContains(coords, self.__class__):
+                self.body.actionEnergyExpenditure(uniform(.6, 1))
+                self.moveInDirection(board, direction) 
+                self.label.raise_()
         if self.body.hungry:
-            hasEaten = self.attemptToEat(board)
-        if not hasEaten:
-            scents = self.nose.smell(self, board, Herbivore)
-            decision, value = max(enumerate(self.brain.decide(scents)), key=lambda p: p[1])
-            if not decision == 4:
-                self.body.actionEnergyExpenditure(uniform(.75, 1.25))  # caloric penalty for searcing for a valid move if not necessary
-                directions = ['N', 'E', 'S', 'W']
-                direction = directions[decision]
-                coords = board.getCoordsAtDirection(self.coords, direction)
-                if not self.containsAnimal(board, direction) and board.validPosition(coords):
-                    self.body.actionEnergyExpenditure(uniform(.75, 1.25))
-                    self.moveInDirection(board, direction)        
+            self.attemptToEat(board)       
         self.attemptToBreed(board)
+
+    def die(self, board):
+        if board.carnivores == 1:
+            board.carnivoreTemplate = self
+        super().die(board)
+        board.carnivores -= 1
+
+    def breed(self, board, direction):
+        super().breed(board, direction)
+        board.carnivores += 1
+
+    def attemptToEat(self, board):
+        if board.cellContains(self.coords, Herbivore):
+            prey = board.getEntityOfClass(self.coords, Herbivore)
+            self.body.actionEnergyExpenditure(uniform(1, 3))
+            self.body.eat(prey)
+            prey.die(board)
+            return True
+        return False
 
 
 class Plant(Organism):

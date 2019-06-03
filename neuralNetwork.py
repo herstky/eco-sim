@@ -6,9 +6,9 @@ class NeuralNetwork:
         self.inputs = 10
         self.outputs = 5
         self.weights = []
-        self.weights.append(2 * np.random.rand(self.inputs, 3) - 1)
+        self.weights.append(2 * np.random.rand(self.inputs, 10) - 1)
         # self.weights.append(2 * np.random.rand(20, 9) - 1)
-        self.weights.append(2 * np.random.rand(4, self.outputs) - 1)
+        self.weights.append(2 * np.random.rand(11, self.outputs) - 1)
         # self.weights.append(np.array(
         #     [[-0.13802866,  0.29494864, -0.57660932],
         #     [ 0.83919849,  0.13856122, -0.17898541],

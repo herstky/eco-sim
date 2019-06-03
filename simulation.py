@@ -12,14 +12,14 @@ from gui import *
 class Simulation:
     def __init__(self, window, waitBetweenRounds=.5):
         self.board = Board(window)
-        self.iteration = 0
+        self.simCount = 1
+        self.iteration = 1
         self.window = window
         self.waitBetweenRounds = waitBetweenRounds
 
-        self.window.simulation = self
         self.window.createBackground(self.board.rows, self.board.cols)
-        self.addEntities()
-        self.window.startTimer(self.tick)
+        self.addEntities()        
+        self.window.startTimer(self, self.tick)
 
     def addEntities(self):
         for entity in self.board.entities:
@@ -49,9 +49,18 @@ class Simulation:
         for particle in particles:
             self.run(particle)
 
+        if self.board.carnivores <= 0:
+            for entity in self.board.entities:
+                if entity.label:
+                    entity.label.deleteLater()
+            self.board = Board(self.window, self.board.carnivoreTemplate)
+            self.simCount += 1
+
         self.board.sortEntities()
         self.board.raiseLabels()
         self.iteration += 1
+
+
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 from random import randint
+from copy import deepcopy
 
 from entities import *
 
@@ -12,11 +13,13 @@ class Cell:
         
                      
 class Board:
-    def __init__(self, window, rows=20, cols=30):
+    def __init__(self, window, carnivoreTemplate=None, rows=20, cols=30):
         self.window = window
+        self.carnivoreTemplate = carnivoreTemplate
         self.rows = rows
         self.cols = cols
         self.entities = []
+        self.carnivores = 0
         self.board = [[Cell() for col in range(self.cols)] for row in range(self.rows)]
         self.populateBoard() # TODO uncomment
         # self.addEntity(Carnivore((1, 1)), (1, 1)) # TODO remove
@@ -66,7 +69,7 @@ class Board:
         self.entities.remove(entity)
         self.removeEntityFromBoard(entity)
         if entity.label:
-            entity.label.hide()
+            entity.label.deleteLater()
 
     def replaceEntity(self, target, replacement):
         '''
@@ -89,7 +92,7 @@ class Board:
         Iterates over list at given coords and returns the first instance of classObject encountered.
         '''
         row, col = coords
-        for entity in self.board[row][col]:
+        for entity in self.board[row][col].organisms:
             if isinstance(entity, classObject):
                 return entity
         return None
@@ -196,8 +199,8 @@ class Board:
         self.entities.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
 
     def populateBoard(self):
-        herbivoreChance = 8
-        carnivoreChance = 1
+        herbivoreChance = 10
+        carnivoreChance = 3
         plantChance = 70
         for row in range(self.rows):
             for col in range(self.cols):
@@ -208,7 +211,14 @@ class Board:
                 if roll <= herbivoreChance:
                     self.addEntity(Herbivore(coords), coords)
                 elif roll <= herbivoreChance + carnivoreChance:
-                    self.addEntity(Carnivore(coords), coords)
+                    if self.carnivoreTemplate is None:
+                        self.addEntity(Carnivore(coords), coords)
+                    else:
+                        newCarnivore = Carnivore(coords)
+                        newCarnivore.brain = deepcopy(self.carnivoreTemplate.brain)
+                        newCarnivore.brain.mutate()
+                        self.addEntity(newCarnivore, coords)
+                    self.carnivores += 1
 
     def mapToBoard(self, function):
         '''

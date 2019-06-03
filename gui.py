@@ -17,8 +17,8 @@ class Window(QMainWindow):
         self.qTimer = QTimer()
         self.setGeometry(self.left, self.top, self.width, self.height)
         
-    def startTimer(self, function):
-        self.qTimer.setInterval(self.simulation.waitBetweenRounds * 1000)
+    def startTimer(self, simulation, function):
+        self.qTimer.setInterval(simulation.waitBetweenRounds * 1000)
         self.qTimer.timeout.connect(function)
         self.qTimer.start()
 
