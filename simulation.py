@@ -12,8 +12,9 @@ from gui import *
 class Simulation:
     def __init__(self, window, waitBetweenRounds=.5):
         self.board = Board(window)
-        self.simCount = 1
+        self.round = 1
         self.iteration = 1
+        self.iterationsInRound = 0
         self.window = window
         self.waitBetweenRounds = waitBetweenRounds
 
@@ -49,16 +50,21 @@ class Simulation:
         for particle in particles:
             self.run(particle)
 
+        self.iteration += 1
+        self.iterationsInRound += 1
+
         if self.board.herbivores <= 0:
+            with open('results.txt', 'a') as outputFile:
+                outputFile.write('Round: {}, duration: {}\n'.format(self.round, self.iterationsInRound))
             for entity in self.board.entities:
                 if entity.label:
                     entity.label.deleteLater()
             self.board = Board(self.window, self.board.creatureTemplate)
-            self.simCount += 1
+            self.round += 1
+            self.iterationsInRound = 0
 
         self.board.sortEntities()
         self.board.raiseLabels()
-        self.iteration += 1
 
 
 
@@ -66,6 +72,8 @@ class Simulation:
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Window()
+    with open('results.txt', 'w') as outputFile:
+        outputFile.write('Simulation Results:\n')
     simulation = Simulation(window, .25)    
     window.show()
     sys.exit(app.exec_())

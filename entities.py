@@ -340,19 +340,19 @@ class Animal(Organism):
 
 
 class Herbivore(Animal):
-    def __init__(self, coords, generation=0, mass=30, massCapacity=60, randomize=False):
+    def __init__(self, coords, generation=0, mass=40, massCapacity=60, randomize=False):
         super().__init__(coords, generation, mass, massCapacity, randomize)
         self.name ='Herbivore'
         self.texture = 'assets/blueCircle.png'
         self.diet.append(Plant)
         self.maturityAge = 15
-        self.stepsToBreed = randint(12, 20)
+        self.stepsToBreed = randint(8, 12)
 
     def move(self, board):
         scents = self.nose.smell(self, board, Herbivore)
         decision, value = max(enumerate(self.brain.decide(scents)), key=lambda p: p[1])
         if not decision == 4:
-            self.body.actionEnergyExpenditure(uniform(.25, .4))  # caloric penalty for searcing for a valid move if not necessary
+            self.body.actionEnergyExpenditure(uniform(.25, .4))  # caloric penalty for searching for a valid move if not necessary
             directions = ['N', 'E', 'S', 'W']
             direction = directions[decision]
             coords = board.getCoordsAtDirection(self.coords, direction)
@@ -360,7 +360,7 @@ class Herbivore(Animal):
                 self.body.actionEnergyExpenditure(uniform(.6, 1))
                 self.moveInDirection(board, direction) 
                 self.label.raise_()   
-        if self.body.hungry:
+        if self.body.hungry():
             self.attemptToEat(board)     
         self.attemptToBreed(board)
 
@@ -387,16 +387,19 @@ class Herbivore(Animal):
             spawnCoords = board.searchForEmptySpace(self.coords) or board.searchForEmptySpace(mate.coords)
             if spawnCoords:
                 self.body.actionEnergyExpenditure(uniform(2, 4))
-                self.breed(board, spawnCoords)
+                self.breed(board, mate, spawnCoords)
                 self.resetStepsToBreed()
                 mate.resetStepsToBreed()
                 hasBred = True
         if not hasBred:
             self.decrementStepsToBreed()
 
-    def breed(self, board, coords):
-        super().breed(board, coords)
+    def breed(self, board, mate, coords):
         board.herbivores += 1
+        newAnimal = self.__class__(coords, self.generation + 1)
+        newAnimal.brain.neuralNetwork.weights = self.brain.inheritance(mate.brain)
+        newAnimal.brain.mutate()
+        board.addEntity(newAnimal, coords)
 
     def attemptToEat(self, board):
         if board.cellContains(self.coords, Plant):
@@ -407,6 +410,9 @@ class Herbivore(Animal):
         return False
 
     def die(self, board):
+        if self.age > board.oldestHerbivore:
+            board.oldestHerbivore = self.age
+            board.creatureTemplate = self
         super().die(board)
         board.herbivores -= 1
 
@@ -432,13 +438,13 @@ class Carnivore(Animal):
                 self.body.actionEnergyExpenditure(uniform(.6, 1))
                 self.moveInDirection(board, direction) 
                 self.label.raise_()
-        if self.body.hungry:
+        if self.body.hungry():
             self.attemptToEat(board)       
         self.attemptToBreed(board)
 
     def die(self, board):
         if board.carnivores == 1:
-            board.carnivoreTemplate = self
+            board.creatureTemplate = self
         super().die(board)
         board.carnivores -= 1
 
@@ -470,14 +476,14 @@ class Plant(Organism):
         self.body.grow()
 
     def spreadSeeds(self, board):
-        for _ in range(randint(1, 5)):
+        if randint(1, 100) <= 5:
             directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
             direction = directions[randint(0, len(directions) - 1)]
             magnitude = randint(1, 10)
             coords = self.getCoordsAtDirection(direction, magnitude)
             if board.validPosition(coords):
                 if not board.cellContains(coords, Plant) and not board.cellContains(coords, Seed):
-                    board.addEntity(Seed(coords, self.generation + 1, randint(12, 20)), coords)
+                    board.addEntity(Seed(coords, self.generation + 1, randint(12, 26)), coords)
     
 
 class Seed(Organism):
@@ -489,9 +495,11 @@ class Seed(Organism):
     def simulate(self, board):
         if self.daysToSprout > 0:
             self.daysToSprout -= 1
+        elif randint(1, 100) <= 5:
+            self.die(board)
         else:
             self.sprout(board)
                 
     def sprout(self, board):
-        board.replaceEntity(self, Plant(self.coords, self.generation, 20))
+        board.replaceEntity(self, Plant(self.coords, self.generation, 10))
     

@@ -13,7 +13,7 @@ class Cell:
         
                      
 class Board:
-    def __init__(self, window, creatureTemplate=None, rows=20, cols=30):
+    def __init__(self, window, creatureTemplate=None, rows=30, cols=40):
         self.window = window
         self.creatureTemplate = creatureTemplate
         self.rows = rows
@@ -21,6 +21,7 @@ class Board:
         self.entities = []
         self.carnivores = 0
         self.herbivores = 0
+        self.oldestHerbivore = 0
         self.board = [[Cell() for col in range(self.cols)] for row in range(self.rows)]
         self.populateBoard() # TODO uncomment
         # self.addEntity(Carnivore((1, 1)), (1, 1)) # TODO remove
@@ -234,7 +235,7 @@ class Board:
         self.entities.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
 
     def populateBoard(self):
-        herbivoreChance = 10
+        herbivoreChance = 8
         carnivoreChance = 3
         plantChance = 70
         for row in range(self.rows):
@@ -242,9 +243,15 @@ class Board:
                 roll = randint(1, 100)
                 coords = (row, col)
                 if roll <= plantChance:
-                    self.addEntity(Plant(coords, randint(10, 35)), coords)
+                    self.addEntity(Plant(coords, 0, randint(10, 25)), coords)
                 if roll <= herbivoreChance:
-                    self.addEntity(Herbivore(coords), coords)
+                    if self.creatureTemplate is None:
+                        self.addEntity(Herbivore(coords), coords)
+                    else:
+                        newHerbivore = Herbivore(coords)
+                        newHerbivore.brain = deepcopy(self.creatureTemplate.brain)
+                        newHerbivore.brain.mutate()
+                        self.addEntity(newHerbivore, coords)
                     self.herbivores += 1
                 # elif roll <= herbivoreChance + carnivoreChance:
                 #     if self.creatureTemplate is None:
