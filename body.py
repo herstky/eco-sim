@@ -54,9 +54,15 @@ class Brain:
                 numNodes = len(self.neuralNetwork.weights[i])
             for j in range(numNodes):
                 if j < len(self.neuralNetwork.weights[i]) and j < len(other.neuralNetwork.weights[i]):
-                    node1 = self.neuralNetwork.weights[i][j]
-                    node2 = other.neuralNetwork.weights[i][j]
-                    newWeights[i].append((node1 + node2) / 2)
+                    if randint(1, 100) <= 50:
+                        newWeights[i].append(self.neuralNetwork.weights[i][j])
+                    else:
+                        newWeights[i].append(other.neuralNetwork.weights[i][j])
+                elif j < len(self.neuralNetwork.weights[i]):
+                    newWeights[i].append(self.neuralNetwork.weights[i][j])
+                elif j < len(other.neuralNetwork.weights[i]):
+                    newWeights[i].append(other.neuralNetwork.weights[i][j])
+        return newWeights
 
 
 
