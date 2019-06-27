@@ -1,6 +1,7 @@
-from constants import *
-from neuralNetwork import NeuralNetwork
 from random import uniform, randint
+
+from ecosim.constants import *
+from ecosim.neural_network import NeuralNetwork
 
 
 class Nose:

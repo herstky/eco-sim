@@ -1,7 +1,0 @@
-Simulation Results:
-Round: 1, duration: 3024
-Round: 2, duration: 794
-Round: 3, duration: 5002
-Round: 4, duration: 4934
-Round: 5, duration: 525
-Round: 6, duration: 4945

@@ -1,9 +1,9 @@
 from random import randint, uniform
 from copy import deepcopy
 
-from constants import *
-from neuralNetwork import NeuralNetwork
-from body import *
+from ecosim.constants import *
+from ecosim.neural_network import NeuralNetwork
+from ecosim.body import *
 
 # TODO clean up checking for valid entities and indexes
 # TODO plants and seeds slowing performance. calculate seed landing cell and 

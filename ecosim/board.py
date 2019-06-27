@@ -1,7 +1,7 @@
 from random import randint
 from copy import deepcopy
 
-from entities import *
+from ecosim.entities import *
 
 
 class Cell:

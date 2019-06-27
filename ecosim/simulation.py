@@ -1,12 +1,10 @@
-from multiprocessing.dummy import Pool as ThreadPool
-from multiprocessing import Process
 from random import randint
 import sys
 
-from utilities import functionTimer
-from entities import *
-from board import Board, Cell
-from gui import *
+from tools.utilities import functionTimer
+from ecosim.entities import *
+from ecosim.board import Board, Cell
+from ecosim.gui import *
 
 
 class Simulation:
@@ -54,7 +52,7 @@ class Simulation:
         self.iterationsInRound += 1
 
         if self.board.herbivores <= 0:
-            with open('results.txt', 'a') as outputFile:
+            with open('misc/results.txt', 'a') as outputFile:
                 outputFile.write('Round: {}, duration: {}\n'.format(self.round, self.iterationsInRound))
             for entity in self.board.entities:
                 if entity.label:
@@ -66,14 +64,3 @@ class Simulation:
         self.board.sortEntities()
         self.board.raiseLabels()
 
-
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = Window()
-    with open('results.txt', 'w') as outputFile:
-        outputFile.write('Simulation Results:\n')
-    simulation = Simulation(window, .25)    
-    window.show()
-    sys.exit(app.exec_())
