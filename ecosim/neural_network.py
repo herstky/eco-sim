@@ -1,5 +1,5 @@
 import numpy as np
-from utilities import sigmoid
+from tools.utilities import sigmoid
 
 class NeuralNetwork:
     def __init__(self):

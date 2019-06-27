@@ -1,6 +1,7 @@
-from constants import *
-from neuralNetwork import NeuralNetwork
 from random import uniform, randint
+
+from ecosim.constants import *
+from ecosim.neural_network import NeuralNetwork
 
 
 class Nose:
@@ -18,14 +19,12 @@ class Nose:
                         if particle.sourceClass == targetClass and particle.count >= self.particleThreshold:
                             scentMatrix[y][x] = particle.count 
                             break    
-        maxVal = max(map(max, scentMatrix))
-        if maxVal > 0:
-            # normalize
-            for row in range(len(scentMatrix)):
-                for col in range(len(scentMatrix[0])):
-                    scentMatrix[row][col] = scentMatrix[row][col] / maxVal
         return scentMatrix            
       
+# TODO eyes should perceive edges of the map and visible entities in adjacent tiles
+class Eyes:
+    def __init__(self):
+        pass
 
 class Brain:
     def __init__(self):
@@ -38,10 +37,33 @@ class Brain:
         for theta in self.neuralNetwork.weights:
             for row in range(len(theta)):
                 for col in range(len(theta[0])):
-                    if randint(1, 100) <= 10:
+                    if randint(1, 100) <= 3:
                         theta[row][col] = uniform(-1, 1)
-                    variance = theta[row][col] * .30
+                    variance = theta[row][col] * .05
                     theta[row][col] += uniform(-variance / 2, variance / 2)
+
+    def inheritance(self, other):
+        newWeights = []
+        maxLayerDepth = max(len(self.neuralNetwork.weights), len(other.neuralNetwork.weights))
+        for i in range(maxLayerDepth):
+            newWeights.append([])
+            if i >= len(self.neuralNetwork.weights):
+                numNodes = len(other.neuralNetwork.weights[i])
+            else:
+                numNodes = len(self.neuralNetwork.weights[i])
+            for j in range(numNodes):
+                if j < len(self.neuralNetwork.weights[i]) and j < len(other.neuralNetwork.weights[i]):
+                    if randint(1, 100) <= 50:
+                        newWeights[i].append(self.neuralNetwork.weights[i][j])
+                    else:
+                        newWeights[i].append(other.neuralNetwork.weights[i][j])
+                elif j < len(self.neuralNetwork.weights[i]):
+                    newWeights[i].append(self.neuralNetwork.weights[i][j])
+                elif j < len(other.neuralNetwork.weights[i]):
+                    newWeights[i].append(other.neuralNetwork.weights[i][j])
+        return newWeights
+
+
 
 
 class Stomach:
@@ -49,7 +71,7 @@ class Stomach:
         self.body = body
         self.contents = []
         self.capacityRatio = capacityRatio
-        self.digestionRate = digestionRate
+        self.digestionRate = digestionRate # TODO FIX
 
     @property
     def capacity(self):
@@ -161,11 +183,11 @@ class AnimalBody(Body):
     # Resets the total energy expenditure to the baseline. This method should be called before 
     # any other energy expenditure calculations are done
     def baselineEnergyExpenditure(self):
-        self.totalEnergyExpenditure = 4000 + 100 * self.mass
+        self.totalEnergyExpenditure = 5500 + 150 * self.mass
 
     # magnitude should be approximately 1 for moving a single space, 2-3 for chasing prey, etc
     def actionEnergyExpenditure(self, magnitude):
-        self.totalEnergyExpenditure += 3000 + magnitude * self.mass * 100
+        self.totalEnergyExpenditure += 2000 + 80 * magnitude * self.mass
 
 
 class PlantBody(Body):

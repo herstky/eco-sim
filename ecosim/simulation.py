@@ -1,19 +1,18 @@
-from multiprocessing.dummy import Pool as ThreadPool
-from multiprocessing import Process
 from random import randint
 import sys
 
-from utilities import functionTimer
-from entities import *
-from board import Board, Cell
-from gui import *
+from tools.utilities import functionTimer
+from ecosim.entities import *
+from ecosim.board import Board, Cell
+from ecosim.gui import *
 
 
 class Simulation:
     def __init__(self, window, waitBetweenRounds=.5):
         self.board = Board(window)
-        self.simCount = 1
+        self.round = 1
         self.iteration = 1
+        self.iterationsInRound = 0
         self.window = window
         self.waitBetweenRounds = waitBetweenRounds
 
@@ -49,23 +48,19 @@ class Simulation:
         for particle in particles:
             self.run(particle)
 
-        if self.board.carnivores <= 0:
+        self.iteration += 1
+        self.iterationsInRound += 1
+
+        if self.board.herbivores <= 0:
+            with open('misc/results.txt', 'a') as outputFile:
+                outputFile.write('Round: {}, duration: {}\n'.format(self.round, self.iterationsInRound))
             for entity in self.board.entities:
                 if entity.label:
                     entity.label.deleteLater()
-            self.board = Board(self.window, self.board.carnivoreTemplate)
-            self.simCount += 1
+            self.board = Board(self.window, self.board.creatureTemplate)
+            self.round += 1
+            self.iterationsInRound = 0
 
         self.board.sortEntities()
         self.board.raiseLabels()
-        self.iteration += 1
 
-
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = Window()
-    simulation = Simulation(window, .25)    
-    window.show()
-    sys.exit(app.exec_())

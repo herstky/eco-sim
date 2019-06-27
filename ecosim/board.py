@@ -1,7 +1,7 @@
 from random import randint
 from copy import deepcopy
 
-from entities import *
+from ecosim.entities import *
 
 
 class Cell:
@@ -13,20 +13,17 @@ class Cell:
         
                      
 class Board:
-    def __init__(self, window, carnivoreTemplate=None, rows=20, cols=30):
+    def __init__(self, window, creatureTemplate=None, rows=30, cols=40):
         self.window = window
-        self.carnivoreTemplate = carnivoreTemplate
+        self.creatureTemplate = creatureTemplate
         self.rows = rows
         self.cols = cols
         self.entities = []
         self.carnivores = 0
+        self.herbivores = 0
+        self.oldestHerbivore = 0
         self.board = [[Cell() for col in range(self.cols)] for row in range(self.rows)]
-        self.populateBoard() # TODO uncomment
-        # self.addEntity(Carnivore((1, 1)), (1, 1)) # TODO remove
-        # self.addEntity(Herbivore((3, 1)), (3, 1)) # TODO remove
-        # self.addEntity(Herbivore((1, 2)), (1, 2)) # TODO remove
-        # self.addEntity(Herbivore((2, 2)), (2, 2)) # TODO remove
-        # self.addEntity(Herbivore((10, 10)), (10, 10)) # TODO remove
+        self.populateBoard()
 
     def __getitem__(self, row):
         return self.board[row]
@@ -134,6 +131,40 @@ class Board:
                 return True
         return False
 
+    def checkForAdjacentAnimal(self, coords):
+        directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+        while len(directions) > 0:
+            direction = directions[randint(0, len(directions) - 1)]
+            coordsAtDirection = self.getCoordsAtDirection(coords, direction)
+            if self.cellContains(coordsAtDirection, Animal):
+                return True
+            else:
+                directions.remove(direction)
+        return False
+
+    def searchForEmptySpace(self, coords):
+        directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+        while len(directions) > 0:
+            direction = directions[randint(0, len(directions) - 1)]
+            coordsAtDirection = self.getCoordsAtDirection(coords, direction)
+            if self.validPosition(coordsAtDirection) and not self.cellContains(coordsAtDirection, Animal):
+                return self.getCoordsAtDirection(coords, direction)
+            else:
+                directions.remove(direction)
+        return None 
+
+    def searchForAdjacentClass(self, coords, classObj):
+        directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+        while len(directions) > 0:
+            direction = directions[randint(0, len(directions) - 1)]
+            coordsAtDirection = self.getCoordsAtDirection(coords, direction)
+            if self.cellContains(coordsAtDirection, classObj):
+                return self.getCoordsAtDirection(coords, direction)
+            else:
+                directions.remove(direction)
+        return None
+
+
     def moveEntity(self, entity, coords):
         '''
         Inserts entity to the front of the list at the given coords
@@ -199,7 +230,7 @@ class Board:
         self.entities.sort(key=lambda x: x.speed, reverse=True) # faster entities go first
 
     def populateBoard(self):
-        herbivoreChance = 10
+        herbivoreChance = 8
         carnivoreChance = 3
         plantChance = 70
         for row in range(self.rows):
@@ -207,18 +238,25 @@ class Board:
                 roll = randint(1, 100)
                 coords = (row, col)
                 if roll <= plantChance:
-                    self.addEntity(Plant(coords, randint(10, 35)), coords)
+                    self.addEntity(Plant(coords, 0, randint(10, 25)), coords)
                 if roll <= herbivoreChance:
-                    self.addEntity(Herbivore(coords), coords)
-                elif roll <= herbivoreChance + carnivoreChance:
-                    if self.carnivoreTemplate is None:
-                        self.addEntity(Carnivore(coords), coords)
+                    if self.creatureTemplate is None:
+                        self.addEntity(Herbivore(coords), coords)
                     else:
-                        newCarnivore = Carnivore(coords)
-                        newCarnivore.brain = deepcopy(self.carnivoreTemplate.brain)
-                        newCarnivore.brain.mutate()
-                        self.addEntity(newCarnivore, coords)
-                    self.carnivores += 1
+                        newHerbivore = Herbivore(coords)
+                        newHerbivore.brain = deepcopy(self.creatureTemplate.brain)
+                        newHerbivore.brain.mutate()
+                        self.addEntity(newHerbivore, coords)
+                    self.herbivores += 1
+                # elif roll <= herbivoreChance + carnivoreChance:
+                #     if self.creatureTemplate is None:
+                #         self.addEntity(Carnivore(coords), coords)
+                #     else:
+                #         newCarnivore = Carnivore(coords)
+                #         newCarnivore.brain = deepcopy(self.creatureTemplate.brain)
+                #         newCarnivore.brain.mutate()
+                #         self.addEntity(newCarnivore, coords)
+                #     self.carnivores += 1
 
     def mapToBoard(self, function):
         '''
