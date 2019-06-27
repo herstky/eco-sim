@@ -19,12 +19,6 @@ class Nose:
                         if particle.sourceClass == targetClass and particle.count >= self.particleThreshold:
                             scentMatrix[y][x] = particle.count 
                             break    
-        maxVal = max(map(max, scentMatrix))
-        # if maxVal > 0:
-        #     # normalize
-        #     for row in range(len(scentMatrix)):
-        #         for col in range(len(scentMatrix[0])):
-        #             scentMatrix[row][col] = scentMatrix[row][col] / maxVal
         return scentMatrix            
       
 # TODO eyes should perceive edges of the map and visible entities in adjacent tiles
