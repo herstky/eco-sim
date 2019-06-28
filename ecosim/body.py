@@ -14,7 +14,7 @@ class Nose:
         scentMatrix = [[0 for i in range(size)] for j in range(size)]
         for y in range(size):
             for x in range(size):
-                if board.validPosition((row + y - 1, col + x - 1)) and not board.cellContains(animal.coords, animal.__class__):
+                if board.validPosition((row + y - 1, col + x - 1)):
                     for particle in board[row + y - 1][col + x - 1].particles:
                         if particle.sourceClass == targetClass and particle.count >= self.particleThreshold:
                             scentMatrix[y][x] = particle.count 

@@ -21,7 +21,6 @@ class Board:
         self.entities = []
         self.carnivores = 0
         self.herbivores = 0
-        self.oldestHerbivore = 0
         self.board = [[Cell() for col in range(self.cols)] for row in range(self.rows)]
         self.populateBoard()
 
@@ -244,7 +243,7 @@ class Board:
                         self.addEntity(Herbivore(coords), coords)
                     else:
                         newHerbivore = Herbivore(coords)
-                        newHerbivore.brain = deepcopy(self.creatureTemplate.brain)
+                        newHerbivore.brain = deepcopy(self.creatureTemplate)
                         newHerbivore.brain.mutate()
                         self.addEntity(newHerbivore, coords)
                     self.herbivores += 1

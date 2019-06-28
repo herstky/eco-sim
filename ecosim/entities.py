@@ -215,6 +215,7 @@ class Organism(Entity):
         self.displayPriority = 5
         self.age = 0 # time steps
         self.maturityAge = 0
+        self.lifeSpan = 50
         self.health = 0
         self.healthBaseline = 0
         self.initializeHealth() 
@@ -231,8 +232,8 @@ class Organism(Entity):
         self.age = randint(0, 10)
 
     def getStatus(self, board):
-        if self.health <= 0:
-            return self.die(board)
+        if self.health <= 0 or self.age > self.lifeSpan:
+            self.die(board)
      
 
 class Animal(Organism):
@@ -242,6 +243,7 @@ class Animal(Organism):
         self.displayPriority = 1
         self.diet = []
         self.body = AnimalBody(mass, massCapacity)
+        self.lifeSpan = 100
         self.nose = Nose()
         self.brain = Brain()
         self.strength = 0
@@ -261,8 +263,7 @@ class Animal(Organism):
         self.body.muscleMassFraction = uniform(.30, .40)
 
     def getStatus(self, board):
-        super().getStatus(board)
-        if self.body.starved():
+        if self.health <= 0 or self.age > self.lifeSpan or self.body.starved():
             self.die(board)
 
     def decrementStepsToBreed(self):
@@ -410,9 +411,8 @@ class Herbivore(Animal):
         return False
 
     def die(self, board):
-        if self.age > board.oldestHerbivore:
-            board.oldestHerbivore = self.age
-            board.creatureTemplate = self
+        if board.herbivores == 1:
+            board.creatureTemplate = self.brain
         super().die(board)
         board.herbivores -= 1
 
@@ -468,12 +468,14 @@ class Plant(Organism):
         self.name = 'Plant'
         self.displayPriority = 5
         self.texture = 'assets/plant.png'
+        self.lifeSpan = 40
         self.body = PlantBody(mass, massCapacity)
         self.germinationChance = germinationChance
 
     def simulate(self, board):
         self.spreadSeeds(board)
         self.body.grow()
+        self.age += 1
 
     def spreadSeeds(self, board):
         if randint(1, 100) <= 5:
@@ -484,6 +486,10 @@ class Plant(Organism):
             if board.validPosition(coords):
                 if not board.cellContains(coords, Plant) and not board.cellContains(coords, Seed):
                     board.addEntity(Seed(coords, self.generation + 1, randint(12, 26)), coords)
+
+    def getStatus(self, board):
+        if self.age > self.lifeSpan:
+            self.die(board)
     
 
 class Seed(Organism):
